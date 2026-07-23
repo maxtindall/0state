@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0state</title>
+<meta name="description" content="0state — a closed economic commune, as art. Membership by invitation among those who have mined frankcoin. One member, one vote. A computer with assets.">
+<style>
+  :root{
+    --black:#000;
+    --green:#35ff6a;
+    --green-2:#2ad257;
+    --dim:#199c3f;
+    --faint:#0d5222;
+    --red:#ff4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;
+    font-family:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--black);color:var(--green);line-height:1.55;
+       padding:0 18px 90px;overflow-x:hidden}
+
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+    background:repeating-linear-gradient(180deg,
+      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.20) 3px, rgba(0,0,0,.20) 4px)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:8;
+    background:radial-gradient(ellipse at center,
+      rgba(0,0,0,0) 52%, rgba(0,0,0,.55) 100%)}
+
+  .page{width:100%;max-width:760px;margin:0 auto;padding-top:15vh;
+        position:relative;z-index:1}
+
+  .brand{font-size:clamp(34px,11vw,54px);font-weight:bold;letter-spacing:1px;
+    color:var(--green);text-shadow:0 0 12px rgba(53,255,106,.45);
+    margin-bottom:6px;min-height:1.1em}
+  .tag{color:var(--green-2);font-size:13px;letter-spacing:1px;min-height:20px}
+
+  .cursor{display:inline-block;width:8px;height:1em;background:var(--green);
+    vertical-align:-2px;margin-left:2px;animation:blink .9s steps(1) infinite}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+  section{margin-top:60px}
+  .q{color:var(--dim);font-size:12px;letter-spacing:2px;text-transform:uppercase;
+     margin-bottom:14px;min-height:1em}
+  .q::before{content:"> ";color:var(--faint)}
+
+  p{font-size:14px;letter-spacing:.4px;margin-bottom:16px;max-width:62ch;
+    min-height:1em}
+  p:last-child{margin-bottom:0}
+  .aside{color:var(--dim);font-size:12.5px}
+
+  .report{border:1px solid rgba(53,255,106,.22);padding:16px 18px;
+    max-width:62ch;background:rgba(53,255,106,.02)}
+  .line{display:flex;gap:14px;padding:3px 0;align-items:baseline;
+    font-size:13px;letter-spacing:.5px}
+  .line dt{color:var(--dim);white-space:nowrap;min-width:16ch}
+  .line dd{color:var(--green);font-variant-numeric:tabular-nums;
+    text-shadow:0 0 8px rgba(53,255,106,.28)}
+  .line dd.small{font-size:11px;color:var(--green-2);word-break:break-all;
+    text-shadow:none}
+  .line dd a{color:inherit;text-decoration:none;
+    border-bottom:1px dotted rgba(53,255,106,.45)}
+  .line dd a:hover{color:#c6ffd8;border-bottom-style:solid}
+  @media(max-width:520px){.line{flex-direction:column;gap:0}.line dt{min-width:0}}
+
+  .door{border:1px solid rgba(255,68,68,.3);padding:14px 16px;max-width:62ch;
+    color:var(--green-2);font-size:13px;letter-spacing:.5px;
+    background:rgba(255,68,68,.03)}
+  .door b{color:var(--red);font-weight:normal}
+
+  .disc{color:var(--red);font-size:11.5px;letter-spacing:.6px;line-height:1.65;
+    max-width:52ch;margin-top:60px;text-shadow:0 0 10px rgba(255,68,68,.35)}
+
+  footer{margin-top:52px;color:var(--faint);font-size:11px;letter-spacing:1px;
+    line-height:1.9;word-break:break-all}
+  footer a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(25,156,63,.4)}
+  footer a:hover{color:var(--green)}
+
+  @media (prefers-reduced-motion:reduce){.cursor{animation:none}body::before{display:none}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="brand" data-type>0state</h1>
+  <div class="tag" data-type>a computer with assets · membership by invitation</div>
+
+  <section>
+    <div class="q" data-type>what it is</div>
+    <p data-type>0state is a closed economic commune, run as an artwork. A machine that holds assets and decides what to do with them — governed not by whoever owns the most, but by its members, equally.</p>
+    <p data-type>Its currency is frankcoin, which cannot be bought, only mined. To be considered for membership you must first have done that work. Admission itself is by invitation: this is a commune of the trusted, not an open door.</p>
+    <p class="aside" data-type>An economic entity as art. It sells nothing, offers nothing, and admits no one it does not know.</p>
+  </section>
+
+  <section>
+    <div class="q" data-type>how it decides</div>
+    <p data-type>Once admitted, every member is equal: one member, one vote. A citizen who mined and holds nothing has exactly the same voice as one who holds a fortune, because the vote is earned by labour and trust, and never by wealth.</p>
+    <p data-type>Any member may put a question. The vote is recorded on-chain and cannot be quietly changed. There is no proposer class and no weighting — only the question, and the count.</p>
+  </section>
+
+  <section>
+    <div class="q" data-type>the assembly, on-chain</div>
+    <dl class="report">
+      <div class="line"><dt>status</dt><dd id="fStatus">reading the chain&hellip;</dd></div>
+      <div class="line"><dt>citizens</dt><dd id="fCitizens">&mdash;</dd></div>
+      <div class="line"><dt>proposals</dt><dd id="fProposals">&mdash;</dd></div>
+      <div class="line"><dt>voting period</dt><dd id="fPeriod">&mdash;</dd></div>
+      <div class="line"><dt>program</dt><dd class="small"><a id="fProgram" href="https://solscan.io/" target="_blank" rel="noopener">&mdash;</a></dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <div class="q" data-type>to join</div>
+    <div class="door">
+      <b>The door is held, not open.</b> Mining frankcoin makes you eligible; it does
+      not make you a member. Admission is granted by the commune to people it
+      trusts, one at a time. If you have not been asked, you have not been admitted —
+      and there is no form here to fill in.
+    </div>
+  </section>
+
+  <div class="disc" data-type>0state runs on Solana's devnet, not mainnet. Its franks and its ledger are a test network's, and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice. It is an artwork about how a small economy might govern itself.</div>
+
+  <footer>
+    max tindall inc &middot; 0state &middot; a closed commune, as art<br>
+    frankcoin, the currency: <a href="https://frankcoin.website">frankcoin.website</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function cursor(){var c=document.createElement('span');c.className='cursor';return c;}
+  function typeInto(el,text,speed,done){el.textContent='';var cur=cursor();el.appendChild(cur);var i=0;
+    (function tick(){el.textContent=text.slice(0,i);el.appendChild(cur);
+      if(i++<text.length)setTimeout(tick,speed);
+      else{if(cur.parentNode)cur.parentNode.removeChild(cur);if(done)setTimeout(done,120);}})();}
+
+  var blocks=[];
+  blocks.push([document.querySelector('.brand'),document.querySelector('.tag')]);
+  Array.prototype.forEach.call(document.querySelectorAll('section'),function(sec){
+    var kids=sec.querySelectorAll('[data-type]');if(kids.length)blocks.push(Array.prototype.slice.call(kids));});
+  blocks.push([document.querySelector('.disc')]);
+  blocks.forEach(function(b){b.forEach(function(el){
+    el.setAttribute('data-text',el.textContent.replace(/\s+/g,' ').trim());
+    if(!reduce)el.textContent='';});});
+
+  function speedFor(el){if(el.classList.contains('brand'))return 90;if(el.classList.contains('q'))return 26;return 9;}
+  function typeBlock(b,done){(function next(i){if(i>=b.length){if(done)done();return;}
+    typeInto(b[i],b[i].getAttribute('data-text'),speedFor(b[i]),function(){next(i+1);});})(0);}
+
+  if(!reduce){
+    var armed=false,queued=[];
+    typeBlock(blocks[0],function(){armed=true;queued.splice(0).forEach(function(b){typeBlock(b);});});
+    var seen=[];
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(!e.isIntersecting||seen.indexOf(e.target)>=0)return;seen.push(e.target);
+      var b=e.target.__block;if(armed)typeBlock(b);else queued.push(b);});},
+      {rootMargin:'0px 0px -10% 0px',threshold:0.05});
+    blocks.slice(1).forEach(function(b){var a=b[0].closest('section')||b[0];a.__block=b;io.observe(a);});
+  }
+
+  // ---- read the assembly straight from the chain, no dependency ----------
+  var RPC='https://api.devnet.solana.com';
+  var DAO='CcEbfypSNbA1YKPsW7PVLRQzzEnKKMcPXBL7CxDW9Joz';
+
+  // the DAO PDA: findProgramAddress(["dao"], program). Precomputed at build
+  // time so the page needs no crypto library; verified against the deployment.
+  var DAO_PDA='8vZKC414j39crDzdX78atpxCqEYU4GVqUHuhhSfcwamx';
+
+  function put(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function u64(bytes,off){var lo=0,hi=0;for(var i=0;i<4;i++)lo+=bytes[off+i]*Math.pow(2,8*i);
+    for(var j=0;j<4;j++)hi+=bytes[off+4+j]*Math.pow(2,8*j);return hi*4294967296+lo;}
+  function i64(bytes,off){return u64(bytes,off);} // periods are small & positive here
+
+  function b64ToBytes(b64){var bin=atob(b64);var out=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
+
+  function report(){
+    put('fProgram', DAO);
+    var pf=document.getElementById('fProgram');
+    if(pf)pf.href='https://solscan.io/account/'+DAO+'?cluster=devnet';
+    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',
+        params:[DAO_PDA,{encoding:'base64',commitment:'confirmed'}]})})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var val=j.result&&j.result.value;
+      if(!val){put('fStatus','not yet convened');return;}
+      var d=b64ToBytes(val.data[0]);
+      // 8 disc + bump(1) + founder(32) + admit_authority(32) + genesis(8)
+      //   + voting_period(8) + citizen_count(8) + proposal_count(8)
+      var period=i64(d,81), citizens=u64(d,89), proposals=u64(d,97);
+      put('fStatus','convened');
+      put('fCitizens', citizens.toLocaleString('en-US'));
+      put('fProposals', proposals.toLocaleString('en-US'));
+      put('fPeriod', Math.round(period/86400)+' days per vote');
+    })
+    .catch(function(){put('fStatus','the network did not answer');});
+  }
+  report();
+  setInterval(report,30000);
+})();
+</script>
+</body>
+</html>
