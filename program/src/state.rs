@@ -13,16 +13,26 @@ pub struct Dao {
     /// The one power that is not equal: who may admit and remove members. This
     /// is a TRUSTED-AUTHORITY model by design — a closed commune, not a
     /// trustless one. It starts as the founder and can be handed on (to a
-    /// multisig, or eventually to the DAO itself) via `set_admit_authority`.
+    /// multisig, or eventually to the DAO itself) via a two-step handover:
+    /// `nominate_authority` then `accept_authority`.
     /// Once inside, every member is equal; the authority governs only the door.
     pub admit_authority: Pubkey,
     pub genesis_ts: i64,
     pub voting_period: i64,
     pub citizen_count: u64,
     pub proposal_count: u64,
+    /// A nominated-but-not-yet-accepted next authority. The door is handed on in
+    /// two steps: the current authority nominates a key here, and that key must
+    /// itself sign `accept_authority` to take the power. A transfer to a mistyped
+    /// or unsignable key is therefore harmless — it never becomes real until the
+    /// recipient proves it can sign — so the commune can't be bricked by a
+    /// fat-fingered handover. Zero (default pubkey) means no pending transfer.
+    /// Carved from `reserved`, so INIT_SPACE is unchanged and the existing
+    /// on-chain singleton stays valid without a realloc (those bytes were zero).
+    pub pending_authority: Pubkey,
     /// Forward space for the master-shares layer (a biometric-NFT voting class)
     /// and any later config, so the singleton can grow without a migration.
-    pub reserved: [u8; 128],
+    pub reserved: [u8; 96],
 }
 
 /// A citizen: a wallet that proved it mined. One per wallet, permanent. Carries
@@ -61,6 +71,13 @@ pub struct Proposal {
     pub yes: u64,
     pub no: u64,
     pub abstain: u64,
+    /// The size of the electorate (citizen_count) at the moment this proposal
+    /// opened. Snapshotting it here makes any off-chain quorum or turnout
+    /// calculation unambiguous: the denominator is fixed at creation, not read
+    /// live at some later time when the roll may have changed. Appended last, so
+    /// proposals created before this field existed simply lack these 8 bytes;
+    /// clients treat a missing value as "unknown".
+    pub electorate_at_open: u64,
 }
 
 /// One ballot per citizen per proposal. Its existence is what prevents a second

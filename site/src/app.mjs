@@ -10,6 +10,8 @@
 import {
   Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram,
 } from '@solana/web3.js';
+import sha3 from 'js-sha3';
+const { keccak256 } = sha3;
 
 const RPC = 'https://api.devnet.solana.com';
 const ZEROSTATE = new PublicKey('CcEbfypSNbA1YKPsW7PVLRQzzEnKKMcPXBL7CxDW9Joz');
@@ -206,17 +208,15 @@ function setupPropose() {
     if (!title) return flash('give the proposal a title', true);
     if (new TextEncoder().encode(title).length > 96) return flash('title too long (max 96 bytes)', true);
     const body = $('fBody').value;
-    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body)));
+    // keccak256 of the body, matching the CLI, so the on-chain body_hash pins
+    // the off-chain text identically no matter which client submitted it.
+    const hash = new Uint8Array(keccak256.arrayBuffer(new TextEncoder().encode(body)));
     btn.disabled = true; btn.textContent = 'signing…';
     try { const sig = await sendIx(await proposeIx(title, hash)); flash(`proposed — ${sig.slice(0, 8)}…`); $('fTitle').value = ''; $('fBody').value = ''; await refresh(); }
     catch (e) { flash(errMsg(e), true); }
     finally { btn.disabled = false; btn.textContent = 'submit proposal'; }
   };
 }
-
-// note: SHA-256 here is a body fingerprint for the UI's convenience; the program
-// stores whatever 32-byte hash it is given. The CLI uses keccak; either pins the
-// off-chain text. Consistency of the hashing choice is a follow-up if it matters.
 
 function boot() {
   const btn = $('fConnect');

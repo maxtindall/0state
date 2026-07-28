@@ -42,9 +42,16 @@ pub mod zerostate {
         instructions::revoke::handler(ctx)
     }
 
-    /// Hand the door to a new authority (a multisig, or the DAO itself).
-    pub fn set_admit_authority(ctx: Context<SetAdmitAuthority>) -> Result<()> {
-        instructions::set_admit_authority::handler(ctx)
+    /// Nominate a successor authority (step one of a two-step handover). Records
+    /// a pending key; grants no power until that key accepts.
+    pub fn nominate_authority(ctx: Context<NominateAuthority>) -> Result<()> {
+        instructions::nominate_authority::handler(ctx)
+    }
+
+    /// Accept the nominated authority (step two). Signed by the nominee itself,
+    /// so a handover to a mistyped/unsignable key can never brick the door.
+    pub fn accept_authority(ctx: Context<AcceptAuthority>) -> Result<()> {
+        instructions::accept_authority::handler(ctx)
     }
 
     /// Put a question to the citizens.

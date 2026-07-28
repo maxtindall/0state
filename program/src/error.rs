@@ -18,4 +18,6 @@ pub enum DaoError {
     BadChoice,
     #[msg("only the admit authority may do that")]
     NotTheAuthority,
+    #[msg("only the nominated pending authority may accept the handover")]
+    NotThePendingAuthority,
 }

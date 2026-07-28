@@ -46,6 +46,9 @@ pub fn handler(ctx: Context<Propose>, title: String, body_hash: [u8; 32]) -> Res
     p.yes = 0;
     p.no = 0;
     p.abstain = 0;
+    // Fix the electorate at the moment the question opens, so quorum/turnout has
+    // a stable denominator regardless of who is admitted or revoked later.
+    p.electorate_at_open = dao.citizen_count;
 
     dao.proposal_count += 1;
     Ok(())
