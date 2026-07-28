@@ -97,6 +97,30 @@
   .prop-nums b{color:var(--green-2);font-weight:normal}
   .prop-close{color:var(--faint);font-size:11px;margin-top:6px}
 
+  /* wallet + actions */
+  button{font-family:inherit;background:transparent;color:var(--green);
+    border:1px solid rgba(53,255,106,.4);border-radius:3px;padding:7px 13px;
+    font-size:12px;letter-spacing:.6px;cursor:pointer;
+    transition:border-color .15s,box-shadow .15s,color .15s}
+  button:hover:not(:disabled){border-color:var(--green);box-shadow:0 0 12px rgba(53,255,106,.25)}
+  button:disabled{opacity:.5;cursor:default}
+  .wallet{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;max-width:62ch}
+  .who{color:var(--dim);font-size:11.5px;letter-spacing:.4px}
+  .flash{min-height:1.1em;font-size:11.5px;letter-spacing:.5px;color:var(--green-2);
+    margin-bottom:10px;max-width:62ch}
+  .flash.bad{color:var(--red)}
+  .prop-vote{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+  .prop-vote button{padding:5px 11px;font-size:11px}
+  .propose{border:1px solid rgba(53,255,106,.22);padding:14px 16px;margin-top:16px;
+    max-width:62ch;background:rgba(53,255,106,.02);display:flex;flex-direction:column;gap:9px}
+  .q2{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+  .propose input,.propose textarea{font-family:inherit;background:rgba(0,0,0,.4);
+    color:var(--green);border:1px solid rgba(53,255,106,.28);border-radius:3px;
+    padding:8px 10px;font-size:12.5px;letter-spacing:.4px;resize:vertical;width:100%}
+  .propose input:focus,.propose textarea:focus{outline:none;border-color:var(--green);
+    box-shadow:0 0 10px rgba(53,255,106,.2)}
+  .propose button{align-self:flex-start}
+
   .door{border:1px solid rgba(255,68,68,.3);padding:14px 16px;max-width:62ch;
     color:var(--green-2);font-size:13px;letter-spacing:.5px;
     background:rgba(255,68,68,.03)}
@@ -152,7 +176,19 @@
 
   <section>
     <div class="q" data-type>proposals</div>
+    <div class="wallet">
+      <button id="fConnect" type="button">connect wallet</button>
+      <span id="fWho" class="who"></span>
+    </div>
+    <div id="fFlash" class="flash" role="status" aria-live="polite"></div>
     <div id="fProposalList" class="proposals"><p class="aside">reading the chain&hellip;</p></div>
+
+    <div id="fProposeWrap" class="propose" style="display:none">
+      <div class="q2">put a question to the citizens</div>
+      <input id="fTitle" type="text" maxlength="96" placeholder="proposal title (max 96 chars)" autocomplete="off">
+      <textarea id="fBody" rows="3" placeholder="the full text (kept off-chain; its hash is pinned on-chain)"></textarea>
+      <button id="fProposeBtn" type="button">submit proposal</button>
+    </div>
   </section>
 
   <div class="disc" data-type>0state D.A.O. is currently live on Solana's devnet. Its franks are a test network's and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice.</div>
@@ -236,71 +272,9 @@
   }
   report();
   setInterval(report,30000);
-
-  // ---- the proposals themselves, decoded straight from the chain ----------
-  // Every Proposal account is owned by the program and begins with this 8-byte
-  // Anchor discriminator. getProgramAccounts + a memcmp on it returns them all,
-  // no PDA derivation and no crypto library needed.
-  var PROPOSAL_DISC=[26,94,189,187,116,136,53,33];
-  function discB64(){var s='';for(var i=0;i<PROPOSAL_DISC.length;i++)s+=String.fromCharCode(PROPOSAL_DISC[i]);return btoa(s);}
-
-  function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  function bar(y,n,a){var t=y+n+a;if(!t)return '<span class="y" style="width:0"></span>';
-    function w(v){return (v/t*100).toFixed(1)+'%';}
-    return '<i class="y" style="width:'+w(y)+'"></i><i class="n" style="width:'+w(n)+'"></i><i class="a" style="width:'+w(a)+'"></i>';}
-
-  function decodeProposal(bytes){
-    var o=8; // skip discriminator
-    o+=1;                                   // bump
-    var id=u64(bytes,o); o+=8;
-    o+=32;                                  // proposer
-    var tlen=bytes[o]+bytes[o+1]*256+bytes[o+2]*65536+bytes[o+3]*16777216; o+=4;
-    var title=new TextDecoder().decode(bytes.slice(o,o+tlen)); o+=tlen;
-    o+=32;                                  // body_hash
-    o+=8;                                   // created_ts
-    var closes=i64(bytes,o); o+=8;
-    var yes=u64(bytes,o); o+=8;
-    var no=u64(bytes,o); o+=8;
-    var abstain=u64(bytes,o); o+=8;
-    return {id:id,title:title,closes:closes,yes:yes,no:no,abstain:abstain};
-  }
-
-  function renderProposals(list){
-    var box=document.getElementById('fProposalList');if(!box)return;
-    if(!list.length){box.innerHTML='<p class="aside">no proposals have been put to the commune yet.</p>';return;}
-    var now=Math.floor(Date.now()/1000);
-    list.sort(function(a,b){return b.id-a.id;});
-    box.innerHTML=list.map(function(p){
-      var open=now<p.closes, total=p.yes+p.no+p.abstain;
-      var closeStr=new Date(p.closes*1000).toISOString().slice(0,16).replace('T',' ')+'Z';
-      return '<div class="prop">'
-        +'<div class="prop-head"><span class="prop-title">'+esc(p.title)+'</span>'
-        +'<span class="prop-state '+(open?'open':'closed')+'">'+(open?'open':'closed')+'</span></div>'
-        +'<div class="tally">'+bar(p.yes,p.no,p.abstain)+'</div>'
-        +'<div class="prop-nums"><span>yes <b>'+p.yes+'</b></span><span>no <b>'+p.no+'</b></span>'
-        +'<span>abstain <b>'+p.abstain+'</b></span><span>&middot; '+total+' voted</span></div>'
-        +'<div class="prop-close">'+(open?'closes ':'closed ')+closeStr+' &middot; #'+p.id+'</div>'
-        +'</div>';
-    }).join('');
-  }
-
-  function loadProposals(){
-    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getProgramAccounts',
-        params:[DAO,{encoding:'base64',commitment:'confirmed',
-          filters:[{memcmp:{offset:0,bytes:discB64(),encoding:'base64'}}]}]})})
-    .then(function(r){return r.json();})
-    .then(function(j){
-      if(!j.result){return;}
-      var list=j.result.map(function(a){return decodeProposal(b64ToBytes(a.account.data[0]));});
-      renderProposals(list);
-    })
-    .catch(function(){var box=document.getElementById('fProposalList');
-      if(box)box.innerHTML='<p class="aside">the network did not answer.</p>';});
-  }
-  loadProposals();
-  setInterval(loadProposals,30000);
 })();
 </script>
+<!-- proposals list + wallet voting/proposing (bundled: @solana/web3.js) -->
+<script src="./app.js"></script>
 </body>
 </html>
