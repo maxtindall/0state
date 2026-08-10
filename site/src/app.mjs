@@ -232,19 +232,38 @@ function updateWho() {
   }
 }
 
+function providerName() {
+  if (provider === (window.phantom && window.phantom.solana) || provider?.isPhantom) return 'Phantom';
+  if (provider === window.solflare || provider?.isSolflare) return 'Solflare';
+  if (provider === (window.backpack && window.backpack.solana) || provider?.isBackpack) return 'Backpack';
+  return 'your wallet';
+}
+function shortId(pk) { const s = pk.toBase58(); return s.slice(0, 4) + '…' + s.slice(-4); }
+
 async function connect() {
   provider = getProvider();
   if (!provider) { flash('No Solana wallet detected — install Phantom, Solflare, or Backpack, then reload', true); return; }
-  flash('opening your wallet…');
+  const name = providerName();
+  flash(`opening ${name}… approve the connection`);
+  let r;
   try {
-    const r = await provider.connect();
-    const pk = (r && r.publicKey) || provider.publicKey;
-    if (!pk) throw new Error('wallet returned no public key');
-    wallet = new PublicKey(pk.toString());
-    $('fConnect').textContent = wallet.toBase58().slice(0, 4) + '…' + wallet.toBase58().slice(-4);
-    setupJoin(); setupPropose();
-    await refresh();
-  } catch (e) { flash(errMsg(e), true); }
+    r = await Promise.race([
+      provider.connect(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('__timeout')), 45000)),
+    ]);
+  } catch (e) {
+    if (String(e.message) === '__timeout')
+      flash(`${name} did not respond. If you have more than one wallet installed, disable the others (or set one as default) and reload.`, true);
+    else flash(errMsg(e), true);
+    return;
+  }
+  const pk = (r && r.publicKey) || provider.publicKey;
+  if (!pk) { flash(`${name} connected but returned no address — try a different wallet`, true); return; }
+  wallet = new PublicKey(pk.toString());
+  $('fConnect').textContent = shortId(wallet);
+  const el = $('fFlash'); if (el) { el.className = 'flash ok'; el.textContent = `connected as ${shortId(wallet)}`; }
+  setupJoin(); setupPropose();
+  try { await refresh(); } catch (e) { flash('connected — the network was slow to load data; it will retry', false); }
 }
 
 function setupJoin() {
