@@ -232,38 +232,62 @@ function updateWho() {
   }
 }
 
-function providerName() {
-  if (provider === (window.phantom && window.phantom.solana) || provider?.isPhantom) return 'Phantom';
-  if (provider === window.solflare || provider?.isSolflare) return 'Solflare';
-  if (provider === (window.backpack && window.backpack.solana) || provider?.isBackpack) return 'Backpack';
-  return 'your wallet';
-}
 function shortId(pk) { const s = pk.toBase58(); return s.slice(0, 4) + '…' + s.slice(-4); }
 
-async function connect() {
-  provider = getProvider();
-  if (!provider) { flash('No Solana wallet detected — install Phantom, Solflare, or Backpack, then reload', true); return; }
-  const name = providerName();
-  flash(`opening ${name}… approve the connection`);
-  let r;
-  try {
-    r = await Promise.race([
-      provider.connect(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('__timeout')), 45000)),
-    ]);
-  } catch (e) {
-    if (String(e.message) === '__timeout')
-      flash(`${name} did not respond. If you have more than one wallet installed, disable the others (or set one as default) and reload.`, true);
-    else flash(errMsg(e), true);
-    return;
-  }
-  const pk = (r && r.publicKey) || provider.publicKey;
-  if (!pk) { flash(`${name} connected but returned no address — try a different wallet`, true); return; }
-  wallet = new PublicKey(pk.toString());
+// Detect every injected Solana wallet — not just whichever won window.solana —
+// so the user can pick one directly and bypass a rival extension that's
+// intercepting or suppressing another's popup.
+function detectProviders() {
+  const seen = new Set(), list = [];
+  const add = (name, p) => { if (p && !seen.has(p)) { seen.add(p); list.push([name, p]); } };
+  if (window.phantom && window.phantom.solana) add('Phantom', window.phantom.solana);
+  if (window.solflare && window.solflare.isSolflare) add('Solflare', window.solflare);
+  if (window.backpack) add('Backpack', window.backpack.solana || window.backpack);
+  if (window.solana) add(window.solana.isPhantom ? 'Phantom' : window.solana.isSolflare ? 'Solflare' : 'Wallet', window.solana);
+  return list;
+}
+
+function connect() {
+  const provs = detectProviders();
+  if (!provs.length) { flash('No Solana wallet detected — install Phantom, Solflare, or Backpack, then reload', true); return; }
+  if (provs.length === 1) { connectWith(provs[0][0], provs[0][1]); return; }
+  // Multiple wallets: offer an explicit choice.
+  const el = $('fFlash'); if (!el) return;
+  el.className = 'flash'; el.textContent = 'more than one wallet found — pick one: ';
+  provs.forEach(([name, p]) => {
+    const b = document.createElement('button');
+    b.textContent = name; b.style.marginLeft = '6px'; b.style.padding = '3px 9px'; b.style.fontSize = '11px';
+    b.onclick = () => connectWith(name, p);
+    el.appendChild(b);
+  });
+}
+
+function finishConnect(p, pkStr) {
+  provider = p; wallet = new PublicKey(pkStr);
   $('fConnect').textContent = shortId(wallet);
   const el = $('fFlash'); if (el) { el.className = 'flash ok'; el.textContent = `connected as ${shortId(wallet)}`; }
   setupJoin(); setupPropose();
-  try { await refresh(); } catch (e) { flash('connected — the network was slow to load data; it will retry', false); }
+  refresh().catch(() => {});
+}
+
+async function connectWith(name, p) {
+  provider = p;
+  flash(`opening ${name}… approve in the popup (or click the ${name} extension icon)`);
+  let r;
+  try {
+    r = await Promise.race([
+      p.connect(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('__timeout')), 25000)),
+    ]);
+  } catch (e) {
+    if (String(e.message) === '__timeout')
+      flash(`${name} never opened its popup — another wallet extension is likely intercepting it. Disable the other wallets (or set ${name} as your default), reload, and try again.`, true);
+    else flash(errMsg(e), true);
+    return;
+  }
+  const pk = (r && r.publicKey) || p.publicKey;
+  if (!pk) { flash(`${name} connected but returned no address — try a different wallet`, true); return; }
+  finishConnect(p, pk.toString());
 }
 
 function setupJoin() {
@@ -293,7 +317,7 @@ function boot() {
   const b = $('fConnect'); if (b) b.addEventListener('click', connect);
   refresh();
   setInterval(refresh, 30000);
-  const pv = getProvider();
-  if (pv && pv.connect) pv.connect({ onlyIfTrusted: true }).then((r) => { if (r && r.publicKey) connect(); }).catch(() => {});
+  const provs = detectProviders();
+  if (provs.length) { const [, p] = provs[0]; if (p.connect) p.connect({ onlyIfTrusted: true }).then((r) => { if (r && r.publicKey && !wallet) finishConnect(p, r.publicKey.toString()); }).catch(() => {}); }
 }
 if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);

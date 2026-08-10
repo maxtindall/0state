@@ -21473,9 +21473,6 @@ Message: ${transactionMessage}.
   var isMember = false;
   var hasMined = false;
   var myWeight = null;
-  function getProvider() {
-    return window.phantom && window.phantom.solana || window.solana || window.solflare || window.backpack && window.backpack.solana || null;
-  }
   function isqrt(n) {
     if (n < 2n) return n;
     let x = n, y = (x + 1n) / 2n;
@@ -21709,42 +21706,51 @@ Message: ${transactionMessage}.
       if (prop) prop.style.display = "none";
     }
   }
-  function providerName() {
-    if (provider === (window.phantom && window.phantom.solana) || provider?.isPhantom) return "Phantom";
-    if (provider === window.solflare || provider?.isSolflare) return "Solflare";
-    if (provider === (window.backpack && window.backpack.solana) || provider?.isBackpack) return "Backpack";
-    return "your wallet";
-  }
   function shortId(pk) {
     const s = pk.toBase58();
     return s.slice(0, 4) + "\u2026" + s.slice(-4);
   }
-  async function connect() {
-    provider = getProvider();
-    if (!provider) {
+  function detectProviders() {
+    const seen = /* @__PURE__ */ new Set(), list = [];
+    const add2 = (name, p) => {
+      if (p && !seen.has(p)) {
+        seen.add(p);
+        list.push([name, p]);
+      }
+    };
+    if (window.phantom && window.phantom.solana) add2("Phantom", window.phantom.solana);
+    if (window.solflare && window.solflare.isSolflare) add2("Solflare", window.solflare);
+    if (window.backpack) add2("Backpack", window.backpack.solana || window.backpack);
+    if (window.solana) add2(window.solana.isPhantom ? "Phantom" : window.solana.isSolflare ? "Solflare" : "Wallet", window.solana);
+    return list;
+  }
+  function connect() {
+    const provs = detectProviders();
+    if (!provs.length) {
       flash("No Solana wallet detected \u2014 install Phantom, Solflare, or Backpack, then reload", true);
       return;
     }
-    const name = providerName();
-    flash(`opening ${name}\u2026 approve the connection`);
-    let r;
-    try {
-      r = await Promise.race([
-        provider.connect(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("__timeout")), 45e3))
-      ]);
-    } catch (e) {
-      if (String(e.message) === "__timeout")
-        flash(`${name} did not respond. If you have more than one wallet installed, disable the others (or set one as default) and reload.`, true);
-      else flash(errMsg(e), true);
+    if (provs.length === 1) {
+      connectWith(provs[0][0], provs[0][1]);
       return;
     }
-    const pk = r && r.publicKey || provider.publicKey;
-    if (!pk) {
-      flash(`${name} connected but returned no address \u2014 try a different wallet`, true);
-      return;
-    }
-    wallet = new PublicKey(pk.toString());
+    const el = $("fFlash");
+    if (!el) return;
+    el.className = "flash";
+    el.textContent = "more than one wallet found \u2014 pick one: ";
+    provs.forEach(([name, p]) => {
+      const b = document.createElement("button");
+      b.textContent = name;
+      b.style.marginLeft = "6px";
+      b.style.padding = "3px 9px";
+      b.style.fontSize = "11px";
+      b.onclick = () => connectWith(name, p);
+      el.appendChild(b);
+    });
+  }
+  function finishConnect(p, pkStr) {
+    provider = p;
+    wallet = new PublicKey(pkStr);
     $("fConnect").textContent = shortId(wallet);
     const el = $("fFlash");
     if (el) {
@@ -21753,11 +21759,30 @@ Message: ${transactionMessage}.
     }
     setupJoin();
     setupPropose();
+    refresh().catch(() => {
+    });
+  }
+  async function connectWith(name, p) {
+    provider = p;
+    flash(`opening ${name}\u2026 approve in the popup (or click the ${name} extension icon)`);
+    let r;
     try {
-      await refresh();
+      r = await Promise.race([
+        p.connect(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("__timeout")), 25e3))
+      ]);
     } catch (e) {
-      flash("connected \u2014 the network was slow to load data; it will retry", false);
+      if (String(e.message) === "__timeout")
+        flash(`${name} never opened its popup \u2014 another wallet extension is likely intercepting it. Disable the other wallets (or set ${name} as your default), reload, and try again.`, true);
+      else flash(errMsg(e), true);
+      return;
     }
+    const pk = r && r.publicKey || p.publicKey;
+    if (!pk) {
+      flash(`${name} connected but returned no address \u2014 try a different wallet`, true);
+      return;
+    }
+    finishConnect(p, pk.toString());
   }
   function setupJoin() {
     const b = $("fJoin");
@@ -21806,11 +21831,14 @@ Message: ${transactionMessage}.
     if (b) b.addEventListener("click", connect);
     refresh();
     setInterval(refresh, 3e4);
-    const pv = getProvider();
-    if (pv && pv.connect) pv.connect({ onlyIfTrusted: true }).then((r) => {
-      if (r && r.publicKey) connect();
-    }).catch(() => {
-    });
+    const provs = detectProviders();
+    if (provs.length) {
+      const [, p] = provs[0];
+      if (p.connect) p.connect({ onlyIfTrusted: true }).then((r) => {
+        if (r && r.publicKey && !wallet) finishConnect(p, r.publicKey.toString());
+      }).catch(() => {
+      });
+    }
   }
   if (document.readyState !== "loading") boot();
   else document.addEventListener("DOMContentLoaded", boot);
