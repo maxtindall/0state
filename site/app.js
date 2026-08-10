@@ -21441,12 +21441,15 @@ Message: ${transactionMessage}.
   var import_js_sha3 = __toESM(require_sha3(), 1);
   var { keccak256 } = import_js_sha3.default;
   var RPC = "https://api.devnet.solana.com";
-  var ZEROSTATE = new PublicKey("CcEbfypSNbA1YKPsW7PVLRQzzEnKKMcPXBL7CxDW9Joz");
+  var ZEROSTATE = new PublicKey("BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9");
   var FRANKCOIN = new PublicKey("61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8");
   var SYS = SystemProgram.programId;
   var conn = new Connection(RPC, "confirmed");
-  var D_VOTE = [227, 110, 155, 23, 136, 126, 172, 25];
+  var ONE_FRANK = 1000000000n;
+  var HALF_LIFE = 90 * 24 * 60 * 60;
+  var D_JOIN = [206, 55, 2, 106, 113, 220, 17, 163];
   var D_PROPOSE = [93, 253, 82, 168, 118, 33, 102, 90];
+  var D_VOTE = [227, 110, 155, 23, 136, 126, 172, 25];
   var PROPOSAL_DISC = [26, 94, 189, 187, 116, 136, 53, 33];
   var enc = new TextEncoder();
   var seed = (s) => enc.encode(s);
@@ -21461,12 +21464,34 @@ Message: ${transactionMessage}.
   };
   var pda = (seeds, prog = ZEROSTATE) => PublicKey.findProgramAddressSync(seeds, prog)[0];
   var daoPda = () => pda([seed("dao")]);
-  var citizenPda = (w) => pda([seed("citizen"), w.toBytes()]);
+  var memberPda = (w) => pda([seed("member"), w.toBytes()]);
   var proposalPda = (id) => pda([seed("proposal"), u64le(id)]);
-  var ballotPda = (pr, cz) => pda([seed("ballot"), pr.toBytes(), cz.toBytes()]);
+  var ballotPda = (pr, m) => pda([seed("ballot"), pr.toBytes(), m.toBytes()]);
   var proofPda = (w) => pda([seed("proof"), w.toBytes()], FRANKCOIN);
   var wallet = null;
-  var daoState = null;
+  var isMember = false;
+  var hasMined = false;
+  var myWeight = null;
+  function isqrt(n) {
+    if (n < 2n) return n;
+    let x = n, y = (x + 1n) / 2n;
+    while (y < x) {
+      x = y;
+      y = (x + n / x) / 2n;
+    }
+    return x;
+  }
+  async function readWeight(w) {
+    const info = await conn.getAccountInfo(proofPda(w));
+    if (!info) return null;
+    const d = info.data;
+    const lastClaim = Number(new DataView(d.buffer, d.byteOffset + 8 + 64, 8).getBigInt64(0, true));
+    const total = new DataView(d.buffer, d.byteOffset + 8 + 64 + 8, 8).getBigUint64(0, true);
+    const whole = total / ONE_FRANK;
+    const idle = Math.max(0, Math.floor(Date.now() / 1e3) - lastClaim);
+    const halvings = BigInt(Math.min(Math.floor(idle / HALF_LIFE), 63));
+    return (1n + isqrt(whole >> halvings)).toString();
+  }
   function decodeProposal(d) {
     let o = 8 + 1;
     const id = Number(new DataView(d.buffer, d.byteOffset + o, 8).getBigUint64(0, true));
@@ -21496,49 +21521,79 @@ Message: ${transactionMessage}.
     });
     return res.map((a) => decodeProposal(a.account.data)).sort((a, b) => b.id - a.id);
   }
-  async function sendIx(ix) {
+  var explorer = (sig) => `https://solscan.io/tx/${sig}?cluster=devnet`;
+  function simError(v) {
+    const logs = (v.logs || []).join(" ");
+    const named = /Error Code: (\w+)/.exec(logs);
+    const msg = /already in use/i.test(logs) ? "already in use" : named ? named[1] : JSON.stringify(v.err);
+    const e = new Error(msg);
+    e.logs = v.logs;
+    return e;
+  }
+  async function sendIx(ix, label) {
     const provider = window.solana;
+    if (!provider || !wallet) throw new Error("connect a wallet first");
     const tx = new Transaction().add(ix);
     tx.feePayer = wallet;
-    tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
+    tx.recentBlockhash = blockhash;
+    flash(`${label}: checking on-chain\u2026`);
+    const sim = await conn.simulateTransaction(tx);
+    if (sim.value.err) throw simError(sim.value);
+    flash(`${label}: approve in your wallet\u2026`);
     const { signature } = await provider.signAndSendTransaction(tx);
-    await conn.confirmTransaction(signature, "confirmed");
+    flash(`${label}: confirming ${signature.slice(0, 8)}\u2026`);
+    const res = await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+    if (res.value.err) {
+      const e = new Error("failed on-chain");
+      e.sig = signature;
+      throw e;
+    }
     return signature;
   }
-  function voteIx(id, choice) {
-    const proposal = proposalPda(id);
-    const citizen = citizenPda(wallet);
-    return new TransactionInstruction({
-      programId: ZEROSTATE,
-      keys: [
-        { pubkey: wallet, isSigner: true, isWritable: true },
-        { pubkey: citizen, isSigner: false, isWritable: true },
-        { pubkey: proposal, isSigner: false, isWritable: true },
-        { pubkey: ballotPda(proposal, citizen), isSigner: false, isWritable: true },
-        { pubkey: SYS, isSigner: false, isWritable: false }
-      ],
-      data: Buffer2.from([...D_VOTE, choice])
-    });
-  }
-  async function proposeIx(title2, bodyHash) {
-    const titleBytes = enc.encode(title2);
-    const len = new Uint8Array(4);
-    new DataView(len.buffer).setUint32(0, titleBytes.length, true);
-    const data = Buffer2.from([...D_PROPOSE, ...len, ...titleBytes, ...bodyHash]);
+  function joinIx() {
     return new TransactionInstruction({
       programId: ZEROSTATE,
       keys: [
         { pubkey: wallet, isSigner: true, isWritable: true },
         { pubkey: daoPda(), isSigner: false, isWritable: true },
-        { pubkey: citizenPda(wallet), isSigner: false, isWritable: false },
-        { pubkey: proposalPda(daoState.proposalCount), isSigner: false, isWritable: true },
+        { pubkey: proofPda(wallet), isSigner: false, isWritable: false },
+        { pubkey: memberPda(wallet), isSigner: false, isWritable: true },
         { pubkey: SYS, isSigner: false, isWritable: false }
       ],
-      data
+      data: Uint8Array.from(D_JOIN)
     });
   }
-  async function isCitizen(w) {
-    return !!await conn.getAccountInfo(citizenPda(w));
+  function voteIx(id, choice) {
+    const proposal = proposalPda(id), member = memberPda(wallet);
+    return new TransactionInstruction({
+      programId: ZEROSTATE,
+      keys: [
+        { pubkey: wallet, isSigner: true, isWritable: true },
+        { pubkey: member, isSigner: false, isWritable: true },
+        { pubkey: proofPda(wallet), isSigner: false, isWritable: false },
+        { pubkey: proposal, isSigner: false, isWritable: true },
+        { pubkey: ballotPda(proposal, member), isSigner: false, isWritable: true },
+        { pubkey: SYS, isSigner: false, isWritable: false }
+      ],
+      data: Uint8Array.from([...D_VOTE, choice])
+    });
+  }
+  function proposeIx(title2, bodyHash) {
+    const titleBytes = enc.encode(title2);
+    const len = new Uint8Array(4);
+    new DataView(len.buffer).setUint32(0, titleBytes.length, true);
+    return new TransactionInstruction({
+      programId: ZEROSTATE,
+      keys: [
+        { pubkey: wallet, isSigner: true, isWritable: true },
+        { pubkey: daoPda(), isSigner: false, isWritable: true },
+        { pubkey: memberPda(wallet), isSigner: false, isWritable: false },
+        { pubkey: proposalPda(daoCount), isSigner: false, isWritable: true },
+        { pubkey: SYS, isSigner: false, isWritable: false }
+      ],
+      data: Uint8Array.from([...D_PROPOSE, ...len, ...titleBytes, ...bodyHash])
+    });
   }
   var $ = (id) => document.getElementById(id);
   function esc(s) {
@@ -21550,22 +21605,21 @@ Message: ${transactionMessage}.
     const w = (v) => (v / t * 100).toFixed(1) + "%";
     return `<i class="y" style="width:${w(y)}"></i><i class="n" style="width:${w(n)}"></i><i class="a" style="width:${w(a)}"></i>`;
   }
-  var citizenNow = false;
+  var daoCount = 0;
   function renderProposals(list) {
     const box = $("fProposalList");
     if (!box) return;
     if (!list.length) {
-      box.innerHTML = '<p class="aside">no proposals have been put to the commune yet.</p>';
+      box.innerHTML = '<p class="aside">no proposals yet.</p>';
       return;
     }
     const now = Math.floor(Date.now() / 1e3);
     box.innerHTML = list.map((p) => {
       const open = now < p.closes, total = p.yes + p.no + p.abstain;
-      const turnout = p.electorate ? ` &middot; turnout ${total}/${p.electorate}` : "";
       const close = new Date(p.closes * 1e3).toISOString().slice(0, 16).replace("T", " ") + "Z";
-      const canVote = wallet && citizenNow && open;
+      const canVote = wallet && isMember && open;
       const btns = canVote ? `<div class="prop-vote"><button data-vote="1" data-id="${p.id}">vote yes</button><button data-vote="0" data-id="${p.id}">vote no</button><button data-vote="2" data-id="${p.id}">abstain</button></div>` : "";
-      return `<div class="prop"><div class="prop-head"><span class="prop-title">${esc(p.title)}</span><span class="prop-state ${open ? "open" : "closed"}">${open ? "open" : "closed"}</span></div><div class="tally">${bar(p.yes, p.no, p.abstain)}</div><div class="prop-nums"><span>yes <b>${p.yes}</b></span><span>no <b>${p.no}</b></span><span>abstain <b>${p.abstain}</b></span><span>&middot; ${total} voted${turnout}</span></div><div class="prop-close">${open ? "closes " : "closed "}${close} &middot; #${p.id}</div>${btns}</div>`;
+      return `<div class="prop"><div class="prop-head"><span class="prop-title">${esc(p.title)}</span><span class="prop-state ${open ? "open" : "closed"}">${open ? "open" : "closed"}</span></div><div class="tally">${bar(p.yes, p.no, p.abstain)}</div><div class="prop-nums"><span>yes <b>${p.yes}</b></span><span>no <b>${p.no}</b></span><span>abstain <b>${p.abstain}</b></span><span>&middot; weighted \xB7 electorate ${p.electorate ?? "?"}</span></div><div class="prop-close">${open ? "closes " : "closed "}${close} &middot; #${p.id}</div>${btns}</div>`;
     }).join("");
     box.querySelectorAll("button[data-vote]").forEach((b) => {
       b.addEventListener("click", async () => {
@@ -21574,8 +21628,8 @@ Message: ${transactionMessage}.
         row.querySelectorAll("button").forEach((x) => x.disabled = true);
         b.textContent = "signing\u2026";
         try {
-          const sig = await sendIx(voteIx(id, choice));
-          flash(`voted \u2014 ${sig.slice(0, 8)}\u2026`);
+          const sig = await sendIx(voteIx(id, choice), "vote");
+          flashOk("voted", sig);
           await refresh();
         } catch (e) {
           flash(errMsg(e), true);
@@ -21587,10 +21641,14 @@ Message: ${transactionMessage}.
   }
   function errMsg(e) {
     const m = String(e?.message || e);
-    if (/already in use|0x0\b/.test(m)) return "you have already voted on this proposal";
-    if (/NotAFrankcoinProof|InsufficientLabour/.test(m)) return "only miners admitted to the commune may act";
-    if (/User rejected|rejected the request/i.test(m)) return "cancelled";
-    return m.slice(0, 90);
+    if (/already in use/i.test(m)) return "you have already voted on this proposal";
+    if (/InsufficientLabour/i.test(m)) return "you must have mined frankcoin to join";
+    if (/ProofOwnerMismatch|NotAFrankcoinProof/i.test(m)) return "no proof of mining found for this wallet";
+    if (/AccountNotInitialized/i.test(m)) return "you are not a member yet \u2014 join first";
+    if (/VotingClosed/i.test(m)) return "voting on this proposal has closed";
+    if (/User rejected|rejected the request|declined/i.test(m)) return "cancelled in wallet";
+    if (/Attempt to debit|insufficient|0x1\b/i.test(m)) return "not enough devnet SOL for the fee";
+    return "error: " + m.slice(0, 120);
   }
   var flashTimer;
   function flash(msg, bad) {
@@ -21599,61 +21657,103 @@ Message: ${transactionMessage}.
     el.textContent = msg;
     el.className = "flash" + (bad ? " bad" : "");
     clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => {
-      el.textContent = "";
-    }, 6e3);
+    if (bad) flashTimer = setTimeout(() => {
+      if (el.className.includes("bad")) el.textContent = "";
+    }, 12e3);
+  }
+  function flashOk(msg, sig) {
+    const el = $("fFlash");
+    if (!el) return;
+    clearTimeout(flashTimer);
+    el.className = "flash ok";
+    el.innerHTML = `${esc(msg)} &mdash; <a href="${explorer(sig)}" target="_blank" rel="noopener">confirmed ${esc(sig.slice(0, 8))}\u2026 &#8599;</a>`;
   }
   async function refresh() {
     try {
       const info = await conn.getAccountInfo(daoPda());
-      if (info) {
-        const d = info.data;
-        const rd = (off2) => Number(new DataView(d.buffer, d.byteOffset + off2, 8).getBigUint64(0, true));
-        daoState = { citizenCount: rd(89), proposalCount: rd(97) };
+      if (info) daoCount = Number(new DataView(info.data.buffer, info.data.byteOffset + 65, 8).getBigUint64(0, true));
+      if (wallet) {
+        isMember = !!await conn.getAccountInfo(memberPda(wallet));
+        myWeight = await readWeight(wallet);
+        hasMined = myWeight !== null;
+        updateWho();
       }
-      if (wallet) citizenNow = await isCitizen(wallet);
       renderProposals(await loadProposals());
     } catch (e) {
       const box = $("fProposalList");
       if (box) box.innerHTML = '<p class="aside">the network did not answer.</p>';
     }
   }
+  function updateWho() {
+    const who = $("fWho"), join = $("fJoin"), prop = $("fProposeWrap");
+    if (!wallet) {
+      if (who) who.textContent = "";
+      if (join) join.style.display = "none";
+      if (prop) prop.style.display = "none";
+      return;
+    }
+    if (isMember) {
+      who.textContent = `member \xB7 voting weight ${myWeight ?? "\u2014"}`;
+      if (join) join.style.display = "none";
+      if (prop) prop.style.display = "block";
+    } else if (hasMined) {
+      who.textContent = "you have mined \u2014 join to become a member";
+      if (join) join.style.display = "inline-flex";
+      if (prop) prop.style.display = "none";
+    } else {
+      who.textContent = "not a member \u2014 mine frankcoin, then join";
+      if (join) join.style.display = "none";
+      if (prop) prop.style.display = "none";
+    }
+  }
   async function connect() {
     const p = window.solana;
     if (!p || !p.isPhantom) {
-      flash("Phantom wallet not found \u2014 install it to vote", true);
+      flash("Phantom wallet not found \u2014 install it to participate", true);
       return;
     }
     try {
       const r = await p.connect();
       wallet = new PublicKey(r.publicKey.toString());
-      const btn = $("fConnect");
-      btn.textContent = wallet.toBase58().slice(0, 4) + "\u2026" + wallet.toBase58().slice(-4);
-      citizenNow = await isCitizen(wallet);
-      const mined = !!await conn.getAccountInfo(proofPda(wallet));
-      $("fWho").textContent = citizenNow ? "you are a citizen \u2014 you may vote and propose" : mined ? "you have mined but are not admitted \u2014 ask the authority to admit you" : "you have not mined frankcoin; only miners can become citizens";
+      $("fConnect").textContent = wallet.toBase58().slice(0, 4) + "\u2026" + wallet.toBase58().slice(-4);
+      setupJoin();
       setupPropose();
       await refresh();
     } catch (e) {
       flash(errMsg(e), true);
     }
   }
+  function setupJoin() {
+    const b = $("fJoin");
+    if (!b) return;
+    b.onclick = async () => {
+      b.disabled = true;
+      b.textContent = "joining\u2026";
+      try {
+        const sig = await sendIx(joinIx(), "join");
+        flashOk("joined \u2014 welcome", sig);
+        await refresh();
+      } catch (e) {
+        flash(errMsg(e), true);
+      } finally {
+        b.disabled = false;
+        b.textContent = "join";
+      }
+    };
+  }
   function setupPropose() {
-    const wrap = $("fProposeWrap");
-    if (!wrap) return;
-    wrap.style.display = citizenNow ? "block" : "none";
     const btn = $("fProposeBtn");
+    if (!btn) return;
     btn.onclick = async () => {
       const title2 = $("fTitle").value.trim();
       if (!title2) return flash("give the proposal a title", true);
       if (new TextEncoder().encode(title2).length > 96) return flash("title too long (max 96 bytes)", true);
-      const body = $("fBody").value;
-      const hash = new Uint8Array(keccak256.arrayBuffer(new TextEncoder().encode(body)));
+      const hash = new Uint8Array(keccak256.arrayBuffer(new TextEncoder().encode($("fBody").value)));
       btn.disabled = true;
       btn.textContent = "signing\u2026";
       try {
-        const sig = await sendIx(await proposeIx(title2, hash));
-        flash(`proposed \u2014 ${sig.slice(0, 8)}\u2026`);
+        const sig = await sendIx(proposeIx(title2, hash), "propose");
+        flashOk("proposed", sig);
         $("fTitle").value = "";
         $("fBody").value = "";
         await refresh();
@@ -21666,8 +21766,8 @@ Message: ${transactionMessage}.
     };
   }
   function boot() {
-    const btn = $("fConnect");
-    if (btn) btn.addEventListener("click", connect);
+    const b = $("fConnect");
+    if (b) b.addEventListener("click", connect);
     refresh();
     setInterval(refresh, 3e4);
     if (window.solana?.isPhantom) window.solana.connect({ onlyIfTrusted: true }).then((r) => {

@@ -155,12 +155,17 @@
 
   <section>
     <div class="q" data-type>introduction</div>
-    <p data-type>0state D.A.O. is a political organization.</p>
+    <p data-type>0state is a political organization governed by the miners of frankcoin. Membership is established through proof-of-work rather than purchase: franks serve as a currency, but the right to participate in governance is distinct from the right to hold them.</p>
   </section>
 
   <section>
     <div class="q" data-type>governance</div>
-    <p data-type>As a proof-of-work ledger, 0state D.A.O. comprises all miners of frankcoin. All miners are entitled to vote on proposals regarding governance and those proposals put forth by the 0state council.</p>
+    <p data-type>franks are a currency — they may be earned, held, and freely traded. Governance rights are held separately. The franchise is acquired only through mining and is non-transferable, so no accumulation of capital can acquire control of the organization. Each member holds one vote; voting weight reflects recent mining activity and diminishes with inactivity. Proposals are decided by simple plurality: the option with the most votes prevails.</p>
+  </section>
+
+  <section>
+    <div class="q" data-type>membership</div>
+    <p data-type>Membership is open and permissionless. Mining a single frankcoin proof confers it — there is no application and no admitting authority. It is contingent on continued participation; a member who ceases to mine gradually forfeits standing. The reference miner is available at <a href="https://frankcoin.website">frankcoin.website</a>.</p>
   </section>
 
   <section>
@@ -178,13 +183,14 @@
     <div class="q" data-type>proposals</div>
     <div class="wallet">
       <button id="fConnect" type="button">connect wallet</button>
+      <button id="fJoin" type="button" style="display:none">join</button>
       <span id="fWho" class="who"></span>
     </div>
     <div id="fFlash" class="flash" role="status" aria-live="polite"></div>
     <div id="fProposalList" class="proposals"><p class="aside">reading the chain&hellip;</p></div>
 
     <div id="fProposeWrap" class="propose" style="display:none">
-      <div class="q2">put a question to the citizens</div>
+      <div class="q2">submit a proposal to the membership</div>
       <input id="fTitle" type="text" maxlength="96" placeholder="proposal title (max 96 chars)" autocomplete="off">
       <textarea id="fBody" rows="3" placeholder="the full text (kept off-chain; its hash is pinned on-chain)"></textarea>
       <button id="fProposeBtn" type="button">submit proposal</button>
@@ -234,11 +240,11 @@
 
   // ---- read the assembly straight from the chain, no dependency ----------
   var RPC='https://api.devnet.solana.com';
-  var DAO='CcEbfypSNbA1YKPsW7PVLRQzzEnKKMcPXBL7CxDW9Joz';
+  var DAO='BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9';
 
   // the DAO PDA: findProgramAddress(["dao"], program). Precomputed at build
   // time so the page needs no crypto library; verified against the deployment.
-  var DAO_PDA='8vZKC414j39crDzdX78atpxCqEYU4GVqUHuhhSfcwamx';
+  var DAO_PDA='7Tq8KzAALZrv87u2WQ3iEwGJHxSS6PkEeE8Bt5NLdzwD';
 
   function put(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   function u64(bytes,off){var lo=0,hi=0;for(var i=0;i<4;i++)lo+=bytes[off+i]*Math.pow(2,8*i);
@@ -260,9 +266,9 @@
       var val=j.result&&j.result.value;
       if(!val){put('fStatus','not yet convened');return;}
       var d=b64ToBytes(val.data[0]);
-      // 8 disc + bump(1) + founder(32) + admit_authority(32) + genesis(8)
-      //   + voting_period(8) + citizen_count(8) + proposal_count(8)
-      var period=i64(d,81), citizens=u64(d,89), proposals=u64(d,97);
+      // 8 disc + bump(1) + founder(32) + genesis(8)
+      //   + voting_period(8) + member_count(8) + proposal_count(8)
+      var period=i64(d,49), citizens=u64(d,57), proposals=u64(d,65);
       put('fStatus','convened');
       put('fCitizens', citizens.toLocaleString('en-US'));
       put('fProposals', proposals.toLocaleString('en-US'));
