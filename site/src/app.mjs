@@ -235,6 +235,7 @@ function updateWho() {
 async function connect() {
   provider = getProvider();
   if (!provider) { flash('No Solana wallet detected — install Phantom, Solflare, or Backpack, then reload', true); return; }
+  flash('opening your wallet…');
   try {
     const r = await provider.connect();
     const pk = (r && r.publicKey) || provider.publicKey;

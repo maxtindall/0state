@@ -21715,6 +21715,7 @@ Message: ${transactionMessage}.
       flash("No Solana wallet detected \u2014 install Phantom, Solflare, or Backpack, then reload", true);
       return;
     }
+    flash("opening your wallet\u2026");
     try {
       const r = await provider.connect();
       const pk = r && r.publicKey || provider.publicKey;
