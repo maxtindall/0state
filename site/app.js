@@ -21469,9 +21469,13 @@ Message: ${transactionMessage}.
   var ballotPda = (pr, m) => pda([seed("ballot"), pr.toBytes(), m.toBytes()]);
   var proofPda = (w) => pda([seed("proof"), w.toBytes()], FRANKCOIN);
   var wallet = null;
+  var provider = null;
   var isMember = false;
   var hasMined = false;
   var myWeight = null;
+  function getProvider() {
+    return window.phantom && window.phantom.solana || window.solana || window.solflare || window.backpack && window.backpack.solana || null;
+  }
   function isqrt(n) {
     if (n < 2n) return n;
     let x = n, y = (x + 1n) / 2n;
@@ -21531,7 +21535,6 @@ Message: ${transactionMessage}.
     return e;
   }
   async function sendIx(ix, label) {
-    const provider = window.solana;
     if (!provider || !wallet) throw new Error("connect a wallet first");
     const tx = new Transaction().add(ix);
     tx.feePayer = wallet;
@@ -21707,14 +21710,16 @@ Message: ${transactionMessage}.
     }
   }
   async function connect() {
-    const p = window.solana;
-    if (!p || !p.isPhantom) {
-      flash("Phantom wallet not found \u2014 install it to participate", true);
+    provider = getProvider();
+    if (!provider) {
+      flash("No Solana wallet detected \u2014 install Phantom, Solflare, or Backpack, then reload", true);
       return;
     }
     try {
-      const r = await p.connect();
-      wallet = new PublicKey(r.publicKey.toString());
+      const r = await provider.connect();
+      const pk = r && r.publicKey || provider.publicKey;
+      if (!pk) throw new Error("wallet returned no public key");
+      wallet = new PublicKey(pk.toString());
       $("fConnect").textContent = wallet.toBase58().slice(0, 4) + "\u2026" + wallet.toBase58().slice(-4);
       setupJoin();
       setupPropose();
@@ -21770,8 +21775,9 @@ Message: ${transactionMessage}.
     if (b) b.addEventListener("click", connect);
     refresh();
     setInterval(refresh, 3e4);
-    if (window.solana?.isPhantom) window.solana.connect({ onlyIfTrusted: true }).then((r) => {
-      if (r?.publicKey) connect();
+    const pv = getProvider();
+    if (pv && pv.connect) pv.connect({ onlyIfTrusted: true }).then((r) => {
+      if (r && r.publicKey) connect();
     }).catch(() => {
     });
   }

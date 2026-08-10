@@ -37,9 +37,17 @@ const ballotPda = (pr, m) => pda([seed('ballot'), pr.toBytes(), m.toBytes()]);
 const proofPda = (w) => pda([seed('proof'), w.toBytes()], FRANKCOIN);
 
 let wallet = null;       // connected pubkey
+let provider = null;     // the injected wallet (Phantom / Solflare / Backpack / …)
 let isMember = false;
 let hasMined = false;
 let myWeight = null;
+
+// Any injected Solana wallet exposes connect() + signAndSendTransaction. Don't
+// hard-gate on Phantom — accept whichever standard provider is present.
+function getProvider() {
+  return (window.phantom && window.phantom.solana) || window.solana
+    || window.solflare || (window.backpack && window.backpack.solana) || null;
+}
 
 function isqrt(n) { if (n < 2n) return n; let x = n, y = (x + 1n) / 2n; while (y < x) { x = y; y = (x + n / x) / 2n; } return x; }
 
@@ -83,7 +91,6 @@ function simError(v) {
   const e = new Error(msg); e.logs = v.logs; return e;
 }
 async function sendIx(ix, label) {
-  const provider = window.solana;
   if (!provider || !wallet) throw new Error('connect a wallet first');
   const tx = new Transaction().add(ix);
   tx.feePayer = wallet;
@@ -226,11 +233,13 @@ function updateWho() {
 }
 
 async function connect() {
-  const p = window.solana;
-  if (!p || !p.isPhantom) { flash('Phantom wallet not found — install it to participate', true); return; }
+  provider = getProvider();
+  if (!provider) { flash('No Solana wallet detected — install Phantom, Solflare, or Backpack, then reload', true); return; }
   try {
-    const r = await p.connect();
-    wallet = new PublicKey(r.publicKey.toString());
+    const r = await provider.connect();
+    const pk = (r && r.publicKey) || provider.publicKey;
+    if (!pk) throw new Error('wallet returned no public key');
+    wallet = new PublicKey(pk.toString());
     $('fConnect').textContent = wallet.toBase58().slice(0, 4) + '…' + wallet.toBase58().slice(-4);
     setupJoin(); setupPropose();
     await refresh();
@@ -264,6 +273,7 @@ function boot() {
   const b = $('fConnect'); if (b) b.addEventListener('click', connect);
   refresh();
   setInterval(refresh, 30000);
-  if (window.solana?.isPhantom) window.solana.connect({ onlyIfTrusted: true }).then((r) => { if (r?.publicKey) connect(); }).catch(() => {});
+  const pv = getProvider();
+  if (pv && pv.connect) pv.connect({ onlyIfTrusted: true }).then((r) => { if (r && r.publicKey) connect(); }).catch(() => {});
 }
 if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
