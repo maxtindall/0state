@@ -1,0 +1,786 @@
+{
+  "address": "BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9",
+  "metadata": {
+    "name": "zerostate",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "0state DAO — communist, proof-of-mine governance over frankcoin"
+  },
+  "docs": [
+    "0state — a political organization governed by the miners of frankcoin.",
+    "",
+    "franks are a currency: earned, held, and freely traded. The franchise is",
+    "something else. Membership is acquired only by MINING and is non-transferable,",
+    "so no accumulation of capital can acquire control of the organization. Money",
+    "and the vote are held separately.",
+    "",
+    "Membership is permissionless — mining an accepted frankcoin proof lets a",
+    "wallet `join`; there is no admitting authority. Voting weight reflects a",
+    "member's mining, tempered sub-linearly and decaying with inactivity, so",
+    "influence tracks recent labour, not wealth. Proposals are decided first past",
+    "the post. This program is the VOTING layer only; it holds no funds."
+  ],
+  "instructions": [
+    {
+      "name": "initialize",
+      "docs": [
+        "Found the organization. Once."
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "founder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "dao",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  111
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "join",
+      "docs": [
+        "Become a member. Permissionless: any wallet that has mined frankcoin may",
+        "join. Mining is the franchise; there is no gatekeeper."
+      ],
+      "discriminator": [
+        206,
+        55,
+        2,
+        106,
+        113,
+        220,
+        17,
+        163
+      ],
+      "accounts": [
+        {
+          "name": "wallet",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "dao",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  111
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "proof",
+          "docs": [
+            "The wallet's frankcoin Proof. Anchor's Account<Proof> only accepts an",
+            "account genuinely owned by frankcoin, and the seed ties it to `wallet`."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  111,
+                  102
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                74,
+                137,
+                246,
+                253,
+                16,
+                22,
+                114,
+                3,
+                195,
+                78,
+                200,
+                71,
+                151,
+                252,
+                14,
+                161,
+                157,
+                167,
+                129,
+                178,
+                210,
+                185,
+                126,
+                95,
+                153,
+                70,
+                125,
+                171,
+                129,
+                40,
+                217,
+                117
+              ]
+            }
+          }
+        },
+        {
+          "name": "member",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "propose",
+      "docs": [
+        "Put a question to the membership. Members only."
+      ],
+      "discriminator": [
+        93,
+        253,
+        82,
+        168,
+        118,
+        33,
+        102,
+        90
+      ],
+      "accounts": [
+        {
+          "name": "proposer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "dao",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  111
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "member",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "proposer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "proposal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  112,
+                  111,
+                  115,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "dao.proposal_count",
+                "account": "Dao"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "body_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "vote",
+      "docs": [
+        "Cast a vote: 0 no, 1 yes, 2 abstain. Weight is derived from the member's",
+        "(decaying) mining, read live from their frankcoin Proof."
+      ],
+      "discriminator": [
+        227,
+        110,
+        155,
+        23,
+        136,
+        126,
+        172,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "voter",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "member",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "voter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "proof",
+          "docs": [
+            "The voter's frankcoin Proof, read for their mining record. Genuinely",
+            "owned by frankcoin (Account<Proof>) and tied to the voter by seed."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  111,
+                  102
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "voter"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                74,
+                137,
+                246,
+                253,
+                16,
+                22,
+                114,
+                3,
+                195,
+                78,
+                200,
+                71,
+                151,
+                252,
+                14,
+                161,
+                157,
+                167,
+                129,
+                178,
+                210,
+                185,
+                126,
+                95,
+                153,
+                70,
+                125,
+                171,
+                129,
+                40,
+                217,
+                117
+              ]
+            }
+          }
+        },
+        {
+          "name": "proposal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  112,
+                  111,
+                  115,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "proposal.id",
+                "account": "Proposal"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ballot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  108,
+                  108,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "proposal"
+              },
+              {
+                "kind": "account",
+                "path": "member"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "choice",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Ballot",
+      "discriminator": [
+        3,
+        232,
+        121,
+        204,
+        232,
+        137,
+        138,
+        164
+      ]
+    },
+    {
+      "name": "Dao",
+      "discriminator": [
+        163,
+        9,
+        47,
+        31,
+        52,
+        85,
+        197,
+        49
+      ]
+    },
+    {
+      "name": "Member",
+      "discriminator": [
+        54,
+        19,
+        162,
+        21,
+        29,
+        166,
+        17,
+        198
+      ]
+    },
+    {
+      "name": "Proposal",
+      "discriminator": [
+        26,
+        94,
+        189,
+        187,
+        116,
+        136,
+        53,
+        33
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NotAFrankcoinProof",
+      "msg": "that Proof account is not owned by the frankcoin program"
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientLabour",
+      "msg": "this wallet has not mined enough to join"
+    },
+    {
+      "code": 6002,
+      "name": "ProofOwnerMismatch",
+      "msg": "the proof account does not belong to this wallet"
+    },
+    {
+      "code": 6003,
+      "name": "TitleTooLong",
+      "msg": "proposal title is too long"
+    },
+    {
+      "code": 6004,
+      "name": "VotingClosed",
+      "msg": "voting on this proposal has closed"
+    },
+    {
+      "code": 6005,
+      "name": "BadChoice",
+      "msg": "invalid vote choice"
+    }
+  ],
+  "types": [
+    {
+      "name": "Ballot",
+      "docs": [
+        "One ballot per member per proposal. Its existence prevents a second vote, and",
+        "it records the weight that was applied for a full audit trail."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "proposal",
+            "type": "pubkey"
+          },
+          {
+            "name": "member",
+            "type": "pubkey"
+          },
+          {
+            "name": "choice",
+            "type": "u8"
+          },
+          {
+            "name": "weight",
+            "type": "u64"
+          },
+          {
+            "name": "cast_ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Dao",
+      "docs": [
+        "The organization's record. One per deployment. Holds only the rules of the",
+        "vote — no treasury, no admin power, no way to mint a vote."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "founder",
+            "docs": [
+              "Who founded it (recorded; grants no special power)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "genesis_ts",
+            "type": "i64"
+          },
+          {
+            "name": "voting_period",
+            "type": "i64"
+          },
+          {
+            "name": "member_count",
+            "type": "u64"
+          },
+          {
+            "name": "proposal_count",
+            "type": "u64"
+          },
+          {
+            "name": "reserved",
+            "docs": [
+              "Forward space so the singleton can grow without a migration."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Member",
+      "docs": [
+        "A member: a wallet that has mined. Created permissionlessly by `join`. Holds",
+        "no weight field — weight is derived live from the member's frankcoin Proof at",
+        "vote time (so it decays with inactivity without needing to be rewritten)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "joined_ts",
+            "type": "i64"
+          },
+          {
+            "name": "votes_cast",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Proof",
+      "docs": [
+        "Per-miner mining state. The rolling challenge makes each proof single-use."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "miner",
+            "type": "pubkey"
+          },
+          {
+            "name": "challenge",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_claim_ts",
+            "type": "i64"
+          },
+          {
+            "name": "total_mined",
+            "type": "u64"
+          },
+          {
+            "name": "count",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Proposal",
+      "docs": [
+        "A question put to the membership. Full text lives off-chain; the chain keeps",
+        "a title and the hash that pins it. Tallies are weighted sums."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "proposer",
+            "type": "pubkey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "body_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "created_ts",
+            "type": "i64"
+          },
+          {
+            "name": "closes_ts",
+            "type": "i64"
+          },
+          {
+            "name": "yes",
+            "type": "u64"
+          },
+          {
+            "name": "no",
+            "type": "u64"
+          },
+          {
+            "name": "abstain",
+            "type": "u64"
+          },
+          {
+            "name": "electorate_at_open",
+            "docs": [
+              "Members enrolled at the moment this opened — a stable denominator for",
+              "turnout, independent of who joins later."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}
