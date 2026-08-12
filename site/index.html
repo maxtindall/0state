@@ -181,6 +181,7 @@
       <div class="line"><dt>status</dt><dd id="fStatus">reading the chain&hellip;</dd></div>
       <div class="line"><dt>miners</dt><dd id="fCitizens">&mdash;</dd></div>
       <div class="line"><dt>proposals</dt><dd id="fProposals">&mdash;</dd></div>
+      <div class="line"><dt>treasury</dt><dd id="fTreasury">&mdash;</dd></div>
       <div class="line"><dt>voting period</dt><dd id="fPeriod">&mdash;</dd></div>
       <div class="line"><dt>program</dt><dd class="small"><a id="fProgram" href="https://solscan.io/" target="_blank" rel="noopener">&mdash;</a></dd></div>
     </dl>
@@ -264,6 +265,10 @@
   // time so the page needs no crypto library; verified against the deployment.
   var DAO_PDA='7Tq8KzAALZrv87u2WQ3iEwGJHxSS6PkEeE8Bt5NLdzwD';
 
+  // The DAO treasury's token account (frankcoin program PDA vault). 10% of every
+  // reward is minted here; spent only by proposal and vote. Precomputed.
+  var TREASURY_ATA='7PnTVpAsxuK3FiEt77ejhsqJj8xu2H55Q4zLQ1nJM4VY';
+
   function put(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   function u64(bytes,off){var lo=0,hi=0;for(var i=0;i<4;i++)lo+=bytes[off+i]*Math.pow(2,8*i);
     for(var j=0;j<4;j++)hi+=bytes[off+4+j]*Math.pow(2,8*j);return hi*4294967296+lo;}
@@ -272,7 +277,16 @@
   function b64ToBytes(b64){var bin=atob(b64);var out=new Uint8Array(bin.length);
     for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
 
+  function reportTreasury(){
+    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:3,method:'getTokenAccountBalance',params:[TREASURY_ATA,{commitment:'confirmed'}]})})
+    .then(function(r){return r.json();})
+    .then(function(j){var v=j.result&&j.result.value;
+      put('fTreasury', v?(Number(v.uiAmount).toLocaleString('en-US')+' franks'):'0 franks');})
+    .catch(function(){});
+  }
   function report(){
+    reportTreasury();
     put('fProgram', DAO);
     var pf=document.getElementById('fProgram');
     if(pf)pf.href='https://solscan.io/account/'+DAO+'?cluster=devnet';
