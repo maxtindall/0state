@@ -194,7 +194,10 @@
   <section>
     <div class="q" data-type>taking part</div>
     <p data-type>Membership and voting live in the terminal, where each member signs with their own mining wallet. The whole path, from nothing to a cast vote:</p>
-    <div class="cli"><span class="cm"># 1 — install the miner (macOS)</span>
+    <div class="cli"><span class="cm"># one time — trust the tap (Homebrew gates third-party formulae)</span>
+<span class="c">$ brew tap maxtindall/frankcoin && brew trust maxtindall/frankcoin</span>
+
+<span class="cm"># 1 — install the miner (macOS)</span>
 <span class="c">$ brew install maxtindall/frankcoin/frankcoin</span>
 
 <span class="cm"># 2 — mine; one accepted proof qualifies you</span>
