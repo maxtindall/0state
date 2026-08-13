@@ -12,7 +12,9 @@
 //   0state join          [--key PATH]   become a member (must have mined)
 //   0state proposals                    list proposals and weighted tallies
 //   0state propose "<title>" [--body S] put a question (members only)
+//   0state propose-spend <to> <franks> "<title>"   propose a treasury spend
 //   0state vote <id> <yes|no|abstain>   cast your weighted vote (members only)
+//   0state execute <id>                 enact a passed spending proposal
 //
 // Options:  --key PATH  keypair (default ~/.config/solana/id.json)
 //           --rpc URL   cluster (default devnet)   env: FRANK_RPC
@@ -49,6 +51,13 @@ const memberPda = (w) => pda([Buffer.from('member'), w.toBuffer()]);
 const proposalPda = (id) => pda([Buffer.from('proposal'), u64le(id)]);
 const ballotPda = (proposal, member) => pda([Buffer.from('ballot'), proposal.toBuffer(), member.toBuffer()]);
 const proofPda = (w) => pda([Buffer.from('proof'), w.toBuffer()], FRANKCOIN);
+// frankcoin treasury (program PDA vault) + its token account
+const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ATA_PROG = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const mintPda = () => pda([Buffer.from('mint')], FRANKCOIN);
+const treasuryPda = () => pda([Buffer.from('treasury')], FRANKCOIN);
+const ata = (owner, mint) => PublicKey.findProgramAddressSync([owner.toBuffer(), TOKEN.toBuffer(), mint.toBuffer()], ATA_PROG)[0];
+const spentPda = (proposal) => pda([Buffer.from('spent'), proposal.toBuffer()], FRANKCOIN);
 
 const CHOICE = { no: 0, yes: 1, abstain: 2 };
 const CHOICE_NAME = ['no', 'yes', 'abstain'];
@@ -80,13 +89,17 @@ function decodeProposal(d) {
   const yes = Number(d.readBigUInt64LE(o)); o += 8;
   const no = Number(d.readBigUInt64LE(o)); o += 8;
   const abstain = Number(d.readBigUInt64LE(o)); o += 8;
-  const electorate = o + 8 <= d.length ? Number(d.readBigUInt64LE(o)) : null;
-  return { id, title, bodyHash, closesTs, yes, no, abstain, electorate };
+  const electorate = o + 8 <= d.length ? Number(d.readBigUInt64LE(o)) : null; o += 8;
+  const spendRecipient = o + 32 <= d.length ? new PublicKey(d.slice(o, o + 32)) : null; o += 32;
+  const spendAmount = o + 8 <= d.length ? Number(d.readBigUInt64LE(o)) : 0;
+  return { id, title, bodyHash, closesTs, yes, no, abstain, electorate, spendRecipient, spendAmount };
 }
 
+function programProvider(wallet) {
+  return new anchor.AnchorProvider(conn, new anchor.Wallet(wallet), { commitment: 'confirmed' });
+}
 function program(wallet) {
-  const provider = new anchor.AnchorProvider(conn, new anchor.Wallet(wallet), { commitment: 'confirmed' });
-  return new anchor.Program(loadIdl('zerostate.idl.json'), provider);
+  return new anchor.Program(loadIdl('zerostate.idl.json'), programProvider(wallet));
 }
 async function fetchDao(p) { try { return await p.account.dao.fetch(daoPda()); } catch { die('0state is not initialized on this cluster'); } }
 
@@ -108,6 +121,10 @@ async function main() {
       console.log('  members     ', dao.memberCount.toString());
       console.log('  proposals   ', dao.proposalCount.toString());
       console.log('  voting period', (dao.votingPeriod.toNumber() / 86400).toFixed(0), 'days');
+      try {
+        const b = await conn.getTokenAccountBalance(ata(treasuryPda(), mintPda()));
+        console.log('  treasury    ', Number(b.value.uiAmount).toLocaleString('en-US'), 'franks (spent only by proposal + vote)');
+      } catch { console.log('  treasury    ', '0 franks'); }
       console.log('');
       console.log('  you         ', me.toBase58());
       const member = await p.account.member.fetchNullable(memberPda(me));
@@ -149,6 +166,12 @@ async function main() {
         console.log(`#${pr.id}  ${pr.title}`);
         console.log(`     ${open ? 'OPEN' : 'closed'} · yes ${pr.yes} · no ${pr.no} · abstain ${pr.abstain} · (weighted; ${total} total)`);
         console.log(`     closes ${new Date(pr.closesTs * 1000).toISOString().slice(0, 16).replace('T', ' ')}Z · electorate ${pr.electorate ?? '?'} · #${pr.id}`);
+        if (pr.spendAmount > 0) {
+          const passed = !open && pr.yes > pr.no;
+          const executed = !!(await conn.getAccountInfo(spentPda(proposalPda(pr.id))));
+          console.log(`     SPEND ${(pr.spendAmount / ONE_FRANK).toLocaleString('en-US')} franks -> ${pr.spendRecipient.toBase58()}`
+            + `  [${executed ? 'executed' : passed ? 'passed — run `0state execute ' + pr.id + '`' : open ? 'voting' : 'rejected'}]`);
+        }
       }
       break;
     }
@@ -162,13 +185,59 @@ async function main() {
       const dao = await fetchDao(p);
       const id = dao.proposalCount.toNumber();
       console.log(`proposing #${id} "${title}"…`);
-      const sig = await p.methods.propose(title, bodyHash).accounts({
+      const sig = await p.methods.propose(title, bodyHash, PublicKey.default(), new anchor.BN(0)).accounts({
         proposer: w.publicKey, dao: daoPda(), member: memberPda(w.publicKey),
         proposal: proposalPda(id), systemProgram: SystemProgram.programId,
       }).rpc();
       console.log(`proposed — this is proposal #${id}`);
       console.log(`  vote:  0state vote ${id} <yes|no|abstain>`);
       console.log(`  tx:    ${sig}`);
+      break;
+    }
+
+    case 'propose-spend': {
+      const w = loadWallet();
+      const recipient = new PublicKey(pos[0] || die('usage: 0state propose-spend <recipient> <franks> "<title>" [--body "text"]'));
+      const franks = Number(pos[1]);
+      const title = pos[2];
+      if (!(franks > 0)) die('amount (franks) must be a positive number');
+      if (!title) die('usage: 0state propose-spend <recipient> <franks> "<title>"');
+      if (Buffer.byteLength(title) > 96) die('title too long (max 96 bytes)');
+      const bodyHash = [...Buffer.from(keccak256.arrayBuffer(Buffer.from(arg('body', ''))))];
+      const amount = new anchor.BN(Math.round(franks * ONE_FRANK).toString());
+      const dao = await fetchDao(p);
+      const id = dao.proposalCount.toNumber();
+      console.log(`proposing spend #${id}: ${franks} franks -> ${recipient.toBase58()}…`);
+      const sig = await p.methods.propose(title, bodyHash, recipient, amount).accounts({
+        proposer: w.publicKey, dao: daoPda(), member: memberPda(w.publicKey),
+        proposal: proposalPda(id), systemProgram: SystemProgram.programId,
+      }).rpc();
+      console.log(`proposed — spend proposal #${id}`);
+      console.log(`  vote:     0state vote ${id} <yes|no|abstain>`);
+      console.log(`  execute (once passed):  0state execute ${id}`);
+      console.log(`  tx:       ${sig}`);
+      break;
+    }
+
+    case 'execute': {
+      const w = loadWallet();
+      const id = parseInt(pos[0], 10);
+      if (Number.isNaN(id)) die('usage: 0state execute <proposal-id>');
+      const proposal = proposalPda(id);
+      const info = await conn.getAccountInfo(proposal);
+      if (!info) die(`proposal #${id} not found`);
+      const pr = decodeProposal(info.data);
+      if (!(pr.spendAmount > 0)) die(`#${id} is not a spending proposal`);
+      const fc = new anchor.Program(loadIdl('frankcoin.idl.json'), programProvider(w));
+      const mint = mintPda(), treasury = treasuryPda();
+      console.log(`executing spend #${id}: ${(pr.spendAmount / ONE_FRANK).toLocaleString('en-US')} franks -> ${pr.spendRecipient.toBase58()}…`);
+      const sig = await fc.methods.treasuryWithdraw().accounts({
+        caller: w.publicKey, mint, treasury, treasuryAta: ata(treasury, mint),
+        recipient: pr.spendRecipient, recipientAta: ata(pr.spendRecipient, mint),
+        proposal, spent: spentPda(proposal),
+        tokenProgram: TOKEN, associatedTokenProgram: ATA_PROG, systemProgram: SystemProgram.programId,
+      }).rpc();
+      console.log('executed. the treasury has paid out.', sig);
       break;
     }
 

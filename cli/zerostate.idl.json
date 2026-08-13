@@ -198,7 +198,10 @@
     {
       "name": "propose",
       "docs": [
-        "Put a question to the membership. Members only."
+        "Put a question to the membership. Members only. For an ordinary proposal",
+        "pass a default recipient and amount 0; for a spending proposal pass the",
+        "treasury recipient and amount — if it passes, anyone may execute the",
+        "frankcoin `treasury_withdraw` it authorizes."
       ],
       "discriminator": [
         93,
@@ -298,6 +301,14 @@
               32
             ]
           }
+        },
+        {
+          "name": "spend_recipient",
+          "type": "pubkey"
+        },
+        {
+          "name": "spend_amount",
+          "type": "u64"
         }
       ]
     },
@@ -777,6 +788,20 @@
               "Members enrolled at the moment this opened — a stable denominator for",
               "turnout, independent of who joins later."
             ],
+            "type": "u64"
+          },
+          {
+            "name": "spend_recipient",
+            "docs": [
+              "If this is a spending proposal, the recipient of the treasury franks and",
+              "the amount (base units). A default (zero) recipient with amount 0 marks",
+              "an ordinary proposal that moves no funds. When such a proposal passes,",
+              "anyone may execute the frankcoin `treasury_withdraw` it authorizes."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "spend_amount",
             "type": "u64"
           }
         ]
