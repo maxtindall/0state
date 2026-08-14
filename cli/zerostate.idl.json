@@ -7,18 +7,19 @@
     "description": "0state DAO — communist, proof-of-mine governance over frankcoin"
   },
   "docs": [
-    "0state — a political organization governed by the miners of frankcoin.",
+    "0state — an autonomous organization governed by the miners of frankcoin.",
     "",
     "franks are a currency: earned, held, and freely traded. The franchise is",
     "something else. Membership is acquired only by MINING and is non-transferable,",
     "so no accumulation of capital can acquire control of the organization. Money",
     "and the vote are held separately.",
     "",
-    "Membership is permissionless — mining an accepted frankcoin proof lets a",
-    "wallet `join`; there is no admitting authority. Voting weight reflects a",
-    "member's mining, tempered sub-linearly and decaying with inactivity, so",
-    "influence tracks recent labour, not wealth. Proposals are decided first past",
-    "the post. This program is the VOTING layer only; it holds no funds."
+    "Membership is automatic — having mined frankcoin (a Proof account) is the",
+    "entire qualification; there is no join step and no admitting authority.",
+    "Voting weight reflects a member's mining, tempered sub-linearly and decaying",
+    "with inactivity, so influence tracks recent labour, not wealth. Proposals are",
+    "decided first past the post. This program is the VOTING layer only; it holds",
+    "no funds."
   ],
   "instructions": [
     {
@@ -54,136 +55,6 @@
                   97,
                   111
                 ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "join",
-      "docs": [
-        "Become a member. Permissionless: any wallet that has mined frankcoin may",
-        "join. Mining is the franchise; there is no gatekeeper."
-      ],
-      "discriminator": [
-        206,
-        55,
-        2,
-        106,
-        113,
-        220,
-        17,
-        163
-      ],
-      "accounts": [
-        {
-          "name": "wallet",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "dao",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  97,
-                  111
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "proof",
-          "docs": [
-            "The wallet's frankcoin Proof. Anchor's Account<Proof> only accepts an",
-            "account genuinely owned by frankcoin, and the seed ties it to `wallet`."
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  111,
-                  102
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "wallet"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                74,
-                137,
-                246,
-                253,
-                16,
-                22,
-                114,
-                3,
-                195,
-                78,
-                200,
-                71,
-                151,
-                252,
-                14,
-                161,
-                157,
-                167,
-                129,
-                178,
-                210,
-                185,
-                126,
-                95,
-                153,
-                70,
-                125,
-                171,
-                129,
-                40,
-                217,
-                117
-              ]
-            }
-          }
-        },
-        {
-          "name": "member",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  101,
-                  109,
-                  98,
-                  101,
-                  114
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "wallet"
               }
             ]
           }
@@ -236,25 +107,64 @@
           }
         },
         {
-          "name": "member",
+          "name": "proof",
+          "docs": [
+            "The proposer's frankcoin Proof — proof of membership (having mined)."
+          ],
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  109,
-                  101,
-                  109,
-                  98,
-                  101,
-                  114
+                  112,
+                  114,
+                  111,
+                  111,
+                  102
                 ]
               },
               {
                 "kind": "account",
                 "path": "proposer"
               }
-            ]
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                74,
+                137,
+                246,
+                253,
+                16,
+                22,
+                114,
+                3,
+                195,
+                78,
+                200,
+                71,
+                151,
+                252,
+                14,
+                161,
+                157,
+                167,
+                129,
+                178,
+                210,
+                185,
+                126,
+                95,
+                153,
+                70,
+                125,
+                171,
+                129,
+                40,
+                217,
+                117
+              ]
+            }
           }
         },
         {
@@ -335,33 +245,10 @@
           "signer": true
         },
         {
-          "name": "member",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  101,
-                  109,
-                  98,
-                  101,
-                  114
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "voter"
-              }
-            ]
-          }
-        },
-        {
           "name": "proof",
           "docs": [
-            "The voter's frankcoin Proof, read for their mining record. Genuinely",
-            "owned by frankcoin (Account<Proof>) and tied to the voter by seed."
+            "The voter's frankcoin Proof — their membership card and their weight.",
+            "Genuinely owned by frankcoin and tied to the voter by seed."
           ],
           "pda": {
             "seeds": [
@@ -467,7 +354,7 @@
               },
               {
                 "kind": "account",
-                "path": "member"
+                "path": "voter"
               }
             ]
           }
@@ -510,19 +397,6 @@
         85,
         197,
         49
-      ]
-    },
-    {
-      "name": "Member",
-      "discriminator": [
-        54,
-        19,
-        162,
-        21,
-        29,
-        166,
-        17,
-        198
       ]
     },
     {
@@ -655,35 +529,6 @@
                 64
               ]
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Member",
-      "docs": [
-        "A member: a wallet that has mined. Created permissionlessly by `join`. Holds",
-        "no weight field — weight is derived live from the member's frankcoin Proof at",
-        "vote time (so it decays with inactivity without needing to be rewritten)."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "wallet",
-            "type": "pubkey"
-          },
-          {
-            "name": "joined_ts",
-            "type": "i64"
-          },
-          {
-            "name": "votes_cast",
-            "type": "u64"
           }
         ]
       }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 0state — command-line client (v2, miners-only).
 //
-// 0state is a political organization governed by the miners of frankcoin.
+// 0state is an autonomous organization governed by the miners of frankcoin.
 // franks are a currency; the vote is earned only by mining and cannot be traded.
 // Membership is permissionless: mine, then `join`. Voting weight is sub-linear
 // in franks mined and decays with inactivity. Signs with YOUR keypair.
@@ -9,12 +9,15 @@
 // Usage:
 //   0state status                       the organization, and your standing
 //   0state address       [--key PATH]   the wallet this would act as
-//   0state join          [--key PATH]   become a member (must have mined)
+//   (membership is automatic — mining frankcoin is the only qualification)
 //   0state proposals                    list proposals and weighted tallies
 //   0state propose "<title>" [--body S] put a question (members only)
 //   0state propose-spend <to> <franks> "<title>"   propose a treasury spend
 //   0state vote <id> <yes|no|abstain>   cast your weighted vote (members only)
 //   0state execute <id>                 enact a passed spending proposal
+//   0state nonce-init                   set up offline signing (one-time, online)
+//   0state vote <id> <choice> --offline sign a vote offline; prints a relayable tx
+//   0state relay <signed-tx>            submit a pre-signed tx (from any peer online)
 //
 // Options:  --key PATH  keypair (default ~/.config/solana/id.json)
 //           --rpc URL   cluster (default devnet)   env: FRANK_RPC
@@ -25,7 +28,7 @@ import { fileURLToPath } from 'url';
 import sha3 from 'js-sha3';
 const { keccak256 } = sha3;
 import anchor from '@coral-xyz/anchor';
-import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, NONCE_ACCOUNT_LENGTH } from '@solana/web3.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ZEROSTATE = new PublicKey('BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9');
@@ -47,9 +50,8 @@ function loadIdl(n) { return JSON.parse(fs.readFileSync(path.join(HERE, n))); }
 const pda = (seeds, prog = ZEROSTATE) => PublicKey.findProgramAddressSync(seeds, prog)[0];
 const u64le = (n) => { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(n)); return b; };
 const daoPda = () => pda([Buffer.from('dao')]);
-const memberPda = (w) => pda([Buffer.from('member'), w.toBuffer()]);
 const proposalPda = (id) => pda([Buffer.from('proposal'), u64le(id)]);
-const ballotPda = (proposal, member) => pda([Buffer.from('ballot'), proposal.toBuffer(), member.toBuffer()]);
+const ballotPda = (proposal, voter) => pda([Buffer.from('ballot'), proposal.toBuffer(), voter.toBuffer()]);
 const proofPda = (w) => pda([Buffer.from('proof'), w.toBuffer()], FRANKCOIN);
 // frankcoin treasury (program PDA vault) + its token account
 const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
@@ -58,6 +60,13 @@ const mintPda = () => pda([Buffer.from('mint')], FRANKCOIN);
 const treasuryPda = () => pda([Buffer.from('treasury')], FRANKCOIN);
 const ata = (owner, mint) => PublicKey.findProgramAddressSync([owner.toBuffer(), TOKEN.toBuffer(), mint.toBuffer()], ATA_PROG)[0];
 const spentPda = (proposal) => pda([Buffer.from('spent'), proposal.toBuffer()], FRANKCOIN);
+
+// A per-wallet durable nonce account (derived by seed) so a transaction can be
+// signed OFFLINE and stay valid indefinitely — then carried over any channel
+// (e.g. a bitchat Bluetooth mesh) and relayed on-chain by any peer with
+// connectivity, instead of expiring with a ~60-second blockhash.
+const NONCE_SEED = '0state-nonce';
+const nonceAccountFor = (pubkey) => PublicKey.createWithSeed(pubkey, NONCE_SEED, SystemProgram.programId);
 
 const CHOICE = { no: 0, yes: 1, abstain: 2 };
 const CHOICE_NAME = ['no', 'yes', 'abstain'];
@@ -76,6 +85,18 @@ async function weightFor(wallet, nowSec) {
   const idle = Math.max(0, nowSec - lastClaim);
   const halvings = BigInt(Math.min(Math.floor(idle / HALF_LIFE), 63));
   return (1n + isqrt(whole >> halvings)).toString();
+}
+
+// The membership count = distinct miners = frankcoin Proof accounts with count>=1.
+// (Membership is automatic, so there is no on-chain roster to read.)
+async function countMiners() {
+  try {
+    const res = await conn.getProgramAccounts(FRANKCOIN, {
+      dataSlice: { offset: 88, length: 8 }, // the Proof.count field
+      filters: [{ dataSize: 997 }],
+    });
+    return res.reduce((n, a) => n + (a.account.data.readBigUInt64LE(0) >= 1n ? 1 : 0), 0);
+  } catch { return null; }
 }
 
 // raw Proposal decode (tolerant), for listing
@@ -115,10 +136,10 @@ async function main() {
 
     case 'status': {
       const dao = await fetchDao(p);
-      console.log('0state — a political organization governed by the miners of frankcoin');
+      console.log('0state — an autonomous organization governed by the miners of frankcoin');
       console.log('  program     ', ZEROSTATE.toBase58());
       console.log('  founder     ', dao.founder.toBase58());
-      console.log('  members     ', dao.memberCount.toString());
+      console.log('  members     ', (await countMiners()) ?? '—', '(miners — every wallet that has mined)');
       console.log('  proposals   ', dao.proposalCount.toString());
       console.log('  voting period', (dao.votingPeriod.toNumber() / 86400).toFixed(0), 'days');
       try {
@@ -127,28 +148,13 @@ async function main() {
       } catch { console.log('  treasury    ', '0 franks'); }
       console.log('');
       console.log('  you         ', me.toBase58());
-      const member = await p.account.member.fetchNullable(memberPda(me));
-      const proofInfo = await conn.getAccountInfo(proofPda(me));
-      if (member) {
-        const w = (await weightFor(me, Math.floor(Date.now() / 1000))) ?? '—';
-        console.log('  member      ', `yes — joined ${new Date(member.joinedTs.toNumber() * 1000).toISOString().slice(0, 10)}, votes cast ${member.votesCast}`);
+      const w = await weightFor(me, Math.floor(Date.now() / 1000));
+      if (w !== null) {
+        console.log('  member      ', 'yes — you have mined (membership is automatic)');
         console.log('  voting weight', w, '(1 + isqrt of active mined franks; decays if you stop mining)');
-      } else if (proofInfo) {
-        console.log('  member      ', 'no — you have mined; run `0state join` to become a member');
       } else {
-        console.log('  member      ', 'no — mine frankcoin first (frankcoin.website), then `0state join`');
+        console.log('  member      ', 'no — mine frankcoin first (frankcoin.website); membership is then automatic');
       }
-      break;
-    }
-
-    case 'join': {
-      const w = loadWallet();
-      console.log('joining as', w.publicKey.toBase58(), '…');
-      const sig = await p.methods.join().accounts({
-        wallet: w.publicKey, dao: daoPda(), proof: proofPda(w.publicKey),
-        member: memberPda(w.publicKey), systemProgram: SystemProgram.programId,
-      }).rpc();
-      console.log('joined. you are a member.', sig);
       break;
     }
 
@@ -186,7 +192,7 @@ async function main() {
       const id = dao.proposalCount.toNumber();
       console.log(`proposing #${id} "${title}"…`);
       const sig = await p.methods.propose(title, bodyHash, PublicKey.default(), new anchor.BN(0)).accounts({
-        proposer: w.publicKey, dao: daoPda(), member: memberPda(w.publicKey),
+        proposer: w.publicKey, dao: daoPda(), proof: proofPda(w.publicKey),
         proposal: proposalPda(id), systemProgram: SystemProgram.programId,
       }).rpc();
       console.log(`proposed — this is proposal #${id}`);
@@ -209,7 +215,7 @@ async function main() {
       const id = dao.proposalCount.toNumber();
       console.log(`proposing spend #${id}: ${franks} franks -> ${recipient.toBase58()}…`);
       const sig = await p.methods.propose(title, bodyHash, recipient, amount).accounts({
-        proposer: w.publicKey, dao: daoPda(), member: memberPda(w.publicKey),
+        proposer: w.publicKey, dao: daoPda(), proof: proofPda(w.publicKey),
         proposal: proposalPda(id), systemProgram: SystemProgram.programId,
       }).rpc();
       console.log(`proposed — spend proposal #${id}`);
@@ -247,13 +253,51 @@ async function main() {
       const choice = CHOICE[(pos[1] || '').toLowerCase()];
       if (Number.isNaN(id) || choice === undefined) die('usage: 0state vote <id> <yes|no|abstain>');
       const proposal = proposalPda(id);
-      const member = memberPda(w.publicKey);
+      const accts = { voter: w.publicKey, proof: proofPda(w.publicKey), proposal, ballot: ballotPda(proposal, w.publicKey), systemProgram: SystemProgram.programId };
+      if (process.argv.includes('--offline')) {
+        const nonceAcct = await nonceAccountFor(w.publicKey);
+        const nonceInfo = await conn.getNonce(nonceAcct);
+        if (!nonceInfo) die('no durable nonce — run `0state nonce-init` once (while online) first');
+        const ix = await p.methods.vote(choice).accounts(accts).instruction();
+        const tx = new Transaction();
+        tx.add(SystemProgram.nonceAdvance({ noncePubkey: nonceAcct, authorizedPubkey: w.publicKey }));
+        tx.add(ix);
+        tx.recentBlockhash = nonceInfo.nonce;
+        tx.feePayer = w.publicKey;
+        tx.sign(w);
+        console.log(`signed offline vote (${CHOICE_NAME[choice]} on #${id}). It stays valid until relayed — carry it over any channel (e.g. a bitchat mesh) and any online peer runs \`0state relay <tx>\`:`);
+        console.log(tx.serialize().toString('base64'));
+        break;
+      }
       console.log(`voting ${CHOICE_NAME[choice]} on #${id}…`);
-      const sig = await p.methods.vote(choice).accounts({
-        voter: w.publicKey, member, proof: proofPda(w.publicKey), proposal,
-        ballot: ballotPda(proposal, member), systemProgram: SystemProgram.programId,
-      }).rpc();
+      const sig = await p.methods.vote(choice).accounts(accts).rpc();
       console.log('voted.', sig);
+      break;
+    }
+
+    case 'nonce-init': {
+      const w = loadWallet();
+      const nonceAcct = await nonceAccountFor(w.publicKey);
+      if (await conn.getAccountInfo(nonceAcct)) { console.log('durable nonce already set up:', nonceAcct.toBase58()); break; }
+      const rent = await conn.getMinimumBalanceForRentExemption(NONCE_ACCOUNT_LENGTH);
+      const tx = new Transaction().add(
+        SystemProgram.createAccountWithSeed({ fromPubkey: w.publicKey, basePubkey: w.publicKey, seed: NONCE_SEED, newAccountPubkey: nonceAcct, lamports: rent, space: NONCE_ACCOUNT_LENGTH, programId: SystemProgram.programId }),
+        SystemProgram.nonceInitialize({ noncePubkey: nonceAcct, authorizedPubkey: w.publicKey }),
+      );
+      console.log('creating your durable nonce (one-time, needs connectivity)…');
+      const sig = await programProvider(w).sendAndConfirm(tx);
+      console.log('durable nonce ready:', nonceAcct.toBase58(), sig);
+      console.log('you can now sign votes offline:  0state vote <id> <choice> --offline');
+      break;
+    }
+
+    case 'relay': {
+      const b64 = pos[0] || die('usage: 0state relay <base64-signed-tx>');
+      const raw = Buffer.from(b64, 'base64');
+      console.log('relaying a pre-signed transaction to the network…');
+      const sig = await conn.sendRawTransaction(raw);
+      await conn.confirmTransaction(sig, 'confirmed');
+      console.log('relayed + confirmed:', sig);
       break;
     }
 
