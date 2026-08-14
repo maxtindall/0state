@@ -204,9 +204,8 @@
 <span class="cm"># 2 — mine; one accepted proof qualifies you</span>
 <span class="c">$ frankmine</span>
 
-<span class="cm"># 3 — install the client, then become a member</span>
+<span class="cm"># 3 — install the client (membership is automatic once you have mined)</span>
 <span class="c">$ brew install maxtindall/frankcoin/0state</span>
-<span class="c">$ 0state join</span>
 
 <span class="cm"># 4 — take part</span>
 <span class="c">$ 0state status</span>                   <span class="cm"># the organization, and your standing</span>
@@ -269,6 +268,20 @@
   // reward is minted here; spent only by proposal and vote. Precomputed.
   var TREASURY_ATA='7PnTVpAsxuK3FiEt77ejhsqJj8xu2H55Q4zLQ1nJM4VY';
 
+  // Membership is automatic: members = miners. Count the frankcoin Proof
+  // accounts (dataSize 997) whose count field (offset 88) is >= 1.
+  var FRANKCOIN='61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8';
+  function reportMiners(){
+    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:4,method:'getProgramAccounts',
+        params:[FRANKCOIN,{encoding:'base64',commitment:'confirmed',dataSlice:{offset:88,length:8},filters:[{dataSize:997}]}]})})
+    .then(function(r){return r.json();})
+    .then(function(j){if(!j.result)return;var n=0;
+      j.result.forEach(function(a){if(u64(b64ToBytes(a.account.data[0]),0)>=1)n++;});
+      put('fCitizens', n.toLocaleString('en-US'));})
+    .catch(function(){});
+  }
+
   function put(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   function u64(bytes,off){var lo=0,hi=0;for(var i=0;i<4;i++)lo+=bytes[off+i]*Math.pow(2,8*i);
     for(var j=0;j<4;j++)hi+=bytes[off+4+j]*Math.pow(2,8*j);return hi*4294967296+lo;}
@@ -300,9 +313,8 @@
       var d=b64ToBytes(val.data[0]);
       // 8 disc + bump(1) + founder(32) + genesis(8)
       //   + voting_period(8) + member_count(8) + proposal_count(8)
-      var period=i64(d,49), citizens=u64(d,57), proposals=u64(d,65);
+      var period=i64(d,49), proposals=u64(d,65);
       put('fStatus','convened');
-      put('fCitizens', citizens.toLocaleString('en-US'));
       put('fProposals', proposals.toLocaleString('en-US'));
       put('fPeriod', Math.round(period/86400)+' days per vote');
     })
@@ -347,8 +359,8 @@
     .then(function(j){if(!j.result)return;renderProps(j.result.map(function(a){return decodeProp(b64ToBytes(a.account.data[0]));}));})
     .catch(function(){var box=document.getElementById('fProposalList');if(box)box.innerHTML='<p class="aside">the network did not answer.</p>';});
   }
-  report();loadProps();
-  setInterval(function(){report();loadProps();},30000);
+  report();loadProps();reportMiners();
+  setInterval(function(){report();loadProps();reportMiners();},30000);
 })();
 </script>
 </body>
