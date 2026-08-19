@@ -4,17 +4,17 @@
     "name": "zerostate",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "0state DAO — communist, proof-of-mine governance over frankcoin"
+    "description": "0state — an autonomous organization governed by the miners of frankcoin"
   },
   "docs": [
-    "0state — an autonomous organization governed by the miners of frankcoin.",
+    "0state — an autonomous organization governed by the miners of STATE.",
     "",
-    "franks are a currency: earned, held, and freely traded. The franchise is",
+    "STATE are a currency: earned, held, and freely traded. The franchise is",
     "something else. Membership is acquired only by MINING and is non-transferable,",
     "so no accumulation of capital can acquire control of the organization. Money",
     "and the vote are held separately.",
     "",
-    "Membership is automatic — having mined frankcoin (a Proof account) is the",
+    "Membership is automatic — having mined STATE (a Proof account) is the",
     "entire qualification; there is no join step and no admitting authority.",
     "Voting weight reflects a member's mining, tempered sub-linearly and decaying",
     "with inactivity, so influence tracks recent labour, not wealth. Proposals are",
@@ -72,7 +72,7 @@
         "Put a question to the membership. Members only. For an ordinary proposal",
         "pass a default recipient and amount 0; for a spending proposal pass the",
         "treasury recipient and amount — if it passes, anyone may execute the",
-        "frankcoin `treasury_withdraw` it authorizes."
+        "STATE `treasury_withdraw` it authorizes."
       ],
       "discriminator": [
         93,
@@ -109,7 +109,7 @@
         {
           "name": "proof",
           "docs": [
-            "The proposer's frankcoin Proof — proof of membership (having mined)."
+            "The proposer's STATE Proof — proof of membership (having mined)."
           ],
           "pda": {
             "seeds": [
@@ -131,38 +131,38 @@
             "program": {
               "kind": "const",
               "value": [
-                74,
-                137,
-                246,
-                253,
-                16,
-                22,
-                114,
-                3,
-                195,
-                78,
-                200,
-                71,
-                151,
-                252,
-                14,
-                161,
-                157,
-                167,
-                129,
+                29,
+                47,
+                77,
+                255,
+                15,
                 178,
-                210,
-                185,
+                175,
                 126,
-                95,
-                153,
-                70,
-                125,
-                171,
-                129,
+                87,
+                126,
+                254,
+                46,
+                244,
+                23,
+                65,
+                184,
                 40,
-                217,
-                117
+                42,
+                216,
+                37,
+                21,
+                4,
+                207,
+                224,
+                95,
+                160,
+                233,
+                18,
+                238,
+                134,
+                177,
+                177
               ]
             }
           }
@@ -226,7 +226,7 @@
       "name": "vote",
       "docs": [
         "Cast a vote: 0 no, 1 yes, 2 abstain. Weight is derived from the member's",
-        "(decaying) mining, read live from their frankcoin Proof."
+        "(decaying) mining, read live from their STATE Proof."
       ],
       "discriminator": [
         227,
@@ -247,8 +247,8 @@
         {
           "name": "proof",
           "docs": [
-            "The voter's frankcoin Proof — their membership card and their weight.",
-            "Genuinely owned by frankcoin and tied to the voter by seed."
+            "The voter's STATE Proof — their membership card and their weight.",
+            "Genuinely owned by STATE and tied to the voter by seed."
           ],
           "pda": {
             "seeds": [
@@ -270,38 +270,38 @@
             "program": {
               "kind": "const",
               "value": [
-                74,
-                137,
-                246,
-                253,
-                16,
-                22,
-                114,
-                3,
-                195,
-                78,
-                200,
-                71,
-                151,
-                252,
-                14,
-                161,
-                157,
-                167,
-                129,
+                29,
+                47,
+                77,
+                255,
+                15,
                 178,
-                210,
-                185,
+                175,
                 126,
-                95,
-                153,
-                70,
-                125,
-                171,
-                129,
+                87,
+                126,
+                254,
+                46,
+                244,
+                23,
+                65,
+                184,
                 40,
-                217,
-                117
+                42,
+                216,
+                37,
+                21,
+                4,
+                207,
+                224,
+                95,
+                160,
+                233,
+                18,
+                238,
+                134,
+                177,
+                177
               ]
             }
           }
@@ -400,6 +400,19 @@
       ]
     },
     {
+      "name": "Proof",
+      "discriminator": [
+        163,
+        35,
+        13,
+        71,
+        15,
+        128,
+        63,
+        82
+      ]
+    },
+    {
       "name": "Proposal",
       "discriminator": [
         26,
@@ -416,8 +429,8 @@
   "errors": [
     {
       "code": 6000,
-      "name": "NotAFrankcoinProof",
-      "msg": "that Proof account is not owned by the frankcoin program"
+      "name": "NotAStateProof",
+      "msg": "that Proof account is not owned by the STATE program"
     },
     {
       "code": 6001,
@@ -536,7 +549,13 @@
     {
       "name": "Proof",
       "docs": [
-        "Per-miner mining state. The rolling challenge makes each proof single-use."
+        "A **read-only mirror** of STATE's `Proof` account, vendored so 0state",
+        "builds with no dependency on the STATE crate. The struct name and field",
+        "layout are identical to STATE's, so Anchor derives the same 8-byte",
+        "discriminator and deserializes the real account byte-for-byte. 0state only",
+        "ever *reads* it — and always under `seeds::program = STATE_PROGRAM`, so",
+        "the account is proven to be genuinely owned by STATE. A citizen cannot",
+        "forge a Proof: this program never creates or writes one."
       ],
       "type": {
         "kind": "struct",
@@ -638,10 +657,10 @@
           {
             "name": "spend_recipient",
             "docs": [
-              "If this is a spending proposal, the recipient of the treasury franks and",
+              "If this is a spending proposal, the recipient of the treasury STATE and",
               "the amount (base units). A default (zero) recipient with amount 0 marks",
               "an ordinary proposal that moves no funds. When such a proposal passes,",
-              "anyone may execute the frankcoin `treasury_withdraw` it authorizes."
+              "anyone may execute the STATE `treasury_withdraw` it authorizes."
             ],
             "type": "pubkey"
           },

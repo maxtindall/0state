@@ -1,22 +1,29 @@
 {
-  "address": "61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8",
+  "address": "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE",
   "metadata": {
-    "name": "frankcoin",
+    "name": "state",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
   "docs": [
-    "frankcoin — a proof-of-work currency for the open bot project.",
-    "Denominated in FRANKS. Fully mined from zero, 100,000,000 cap, no pre-mint,",
-    "no admin inflation. The program itself is the only issuer."
+    "STATE — the mined franchise of 0state. A proof-of-work token whose *purpose*",
+    "is citizenship: to hold STATE you must have MINED it, and mining is the sole",
+    "qualification for membership in the 0state commune. Minted from zero, no",
+    "pre-mint, no admin inflation — the program itself is the only issuer, and",
+    "there is no Doge, no owner, no privileged key: STATE is fully autonomous, as",
+    "a communist franchise must be. Uncapped: the reward decays across a",
+    "distribution phase and then holds at a fixed tail forever, so labour is",
+    "always rewarded and no one's stake can be inflated away. Difficulty retargets",
+    "toward a target pace. One frank in every ten mined is routed to the commons",
+    "treasury — the collective fund — spendable only by a passed 0state vote."
   ],
   "instructions": [
     {
       "name": "create_metadata",
       "docs": [
         "One-time: attach Metaplex token metadata (name/symbol/uri) to the mint so",
-        "explorers show \"frankcoin\" instead of a generic SPL token. The program",
+        "explorers show \"state\" instead of a generic SPL token. The program",
         "signs as its own mint authority (config PDA); gated to the upgrade",
         "authority so the identity can't be front-run. Created mutable, to be",
         "frozen at mainnet."
@@ -86,7 +93,7 @@
         },
         {
           "name": "program",
-          "address": "61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8"
+          "address": "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE"
         },
         {
           "name": "program_data"
@@ -376,7 +383,7 @@
         {
           "name": "treasury",
           "docs": [
-            "franks routed here can only leave via a governance-gated instruction —",
+            "STATE routed here can only leave via a governance-gated instruction —",
             "spending is by 0state proposal and vote. Seeds enforce the address."
           ],
           "pda": {
@@ -917,7 +924,7 @@
     {
       "code": 6000,
       "name": "FullyMined",
-      "msg": "frankcoin is fully mined; the 100,000,000 cap has been reached"
+      "msg": "state emission error"
     },
     {
       "code": 6001,
@@ -963,6 +970,11 @@
       "code": 6009,
       "name": "InsufficientTreasury",
       "msg": "the treasury does not hold enough for this withdrawal"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadyMigrated",
+      "msg": "the config account is already migrated to the current layout"
     }
   ],
   "types": [
@@ -1006,6 +1018,38 @@
           {
             "name": "proofs_accepted",
             "type": "u64"
+          },
+          {
+            "name": "target_interval",
+            "type": "i64"
+          },
+          {
+            "name": "retarget_interval",
+            "type": "u64"
+          },
+          {
+            "name": "window_start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "window_start_proofs",
+            "type": "u64"
+          },
+          {
+            "name": "min_difficulty",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "docs": [
+              "Forward space so future upgrades need no second migration."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
           }
         ]
       }
@@ -1084,7 +1128,7 @@
     {
       "name": "DECIMALS",
       "docs": [
-        "franks has 9 decimals (SPL standard)."
+        "STATE has 9 decimals (SPL standard)."
       ],
       "type": "u8",
       "value": "9"

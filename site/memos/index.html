@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0state — memos</title>
+<meta name="description" content="0state memos — dispatches from the Central Committee. Single-spaced, on the record.">
+<style>
+  :root{
+    --black:#050805; --panel:#0a1109;
+    --green:#35ff6a; --green-2:#2ad257; --dim:#199c3f; --faint:#0d5222;
+    --bright:#c6ffd8; --red:#ff5a5a; --rule:rgba(53,255,106,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--black);color:var(--green);
+    font-family:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace;
+    line-height:1.35;font-size:14px;letter-spacing:.2px;
+    padding:32px 18px 90px;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+    background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.16) 3px,rgba(0,0,0,.16) 4px)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:8;
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.5) 100%)}
+  .sheet{max-width:80ch;margin:0 auto;position:relative;z-index:1}
+
+  .top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;
+    border-bottom:1px solid var(--rule);padding-bottom:12px}
+  .top h1{font-size:clamp(20px,5vw,28px);letter-spacing:2px;color:var(--green);
+    text-shadow:0 0 12px rgba(53,255,106,.4)}
+  .top a{color:var(--green-2);text-decoration:none;font-size:12px;letter-spacing:1px;
+    border:1px solid var(--rule);border-radius:3px;padding:6px 11px}
+  .top a:hover{color:var(--green);border-color:var(--green);box-shadow:0 0 12px rgba(53,255,106,.25)}
+  .intro{color:var(--dim);font-size:12.5px;margin-top:14px}
+
+  /* one memo */
+  .memo{border:1px solid var(--rule);background:var(--panel);margin-top:26px}
+  .memo-head{padding:16px 18px;border-bottom:1px solid var(--rule)}
+  .memo-head .org{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--dim)}
+  .memo-head .org b{color:var(--green)}
+  .memo-head h2{font-size:clamp(18px,4.5vw,24px);letter-spacing:1px;margin:8px 0 2px;
+    color:var(--green);text-shadow:0 0 10px rgba(53,255,106,.35);text-wrap:balance}
+  .memo-head .sub{color:var(--green-2);font-size:12.5px}
+  dl.meta{margin-top:14px;display:grid;grid-template-columns:max-content 1fr;gap:3px 16px;font-size:12.5px}
+  dl.meta dt{color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;font-size:11px;padding-top:2px}
+  dl.meta dd{color:var(--green);word-break:break-word}
+  dl.meta dd b{color:var(--bright);font-weight:normal}
+
+  .memo-body{padding:16px 18px}
+  .memo-body section{margin-top:24px}
+  .memo-body section:first-child{margin-top:0}
+  h3{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);
+    padding-bottom:7px;margin-bottom:11px;border-bottom:1px solid var(--rule)}
+  h3::before{content:"§ ";color:var(--faint)}
+  p{max-width:74ch;margin-bottom:11px}
+  p:last-child{margin-bottom:0}
+  b.k{color:var(--bright);font-weight:normal}
+  ul{list-style:none;max-width:74ch;display:flex;flex-direction:column;gap:8px}
+  ul li{padding-left:20px;position:relative}
+  ul li::before{content:"▸";position:absolute;left:0;color:var(--dim)}
+  ul li b{color:var(--bright);font-weight:normal}
+
+  .ledger{border:1px solid var(--rule);background:rgba(53,255,106,.02)}
+  .row{display:grid;grid-template-columns:15ch 1fr;gap:14px;padding:7px 14px;font-size:12.5px;align-items:baseline}
+  .row + .row{border-top:1px solid rgba(53,255,106,.10)}
+  .row dt{color:var(--dim);white-space:nowrap}
+  .row dd{color:var(--green);word-break:break-all;font-variant-numeric:tabular-nums}
+  .row dd .ok{color:var(--green-2)} .row dd .hi{color:var(--bright)}
+  @media(max-width:560px){dl.meta{grid-template-columns:1fr}dl.meta dt{padding-top:8px}.row{grid-template-columns:1fr;gap:1px}}
+
+  .flag{border:1px solid rgba(255,90,90,.4);background:rgba(255,90,90,.05);padding:13px 15px;max-width:74ch}
+  .flag b{color:var(--red);font-weight:normal}
+  .disc{color:var(--red);font-size:11.5px;letter-spacing:.5px;margin-top:16px;
+    border-left:2px solid rgba(255,90,90,.5);padding-left:12px;max-width:66ch}
+
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--rule);
+    color:var(--faint);font-size:11px;letter-spacing:.6px;line-height:1.8}
+  @media (prefers-reduced-motion:reduce){body::before{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="top">
+    <h1>MEMOS</h1>
+    <a href="../">&larr; 0state</a>
+  </div>
+  <p class="intro">Dispatches from the Central Committee, on the record. Single-spaced. Newest first.</p>
+
+  <article class="memo" id="the-decoupling">
+    <div class="memo-head">
+      <div class="org">Central Committee &middot; <b>max tindall inc</b> &middot; internal memorandum &middot; No. 001</div>
+      <h2>The Decoupling</h2>
+      <div class="sub">frankcoin and 0state, separated &mdash; and shipped to devnet.</div>
+      <dl class="meta">
+        <dt>To</dt><dd>The General Secretary <span style="color:var(--dim)">(D6Ncr7&hellip;KT76)</span></dd>
+        <dt>From</dt><dd>Engineering</dd>
+        <dt>Date</dt><dd>18 August 2026</dd>
+        <dt>Re</dt><dd><b>Pivot complete.</b> Two projects split; three programs deployed and verified.</dd>
+        <dt>Status</dt><dd>Live on Solana devnet</dd>
+      </dl>
+    </div>
+
+    <div class="memo-body">
+      <section>
+        <h3>Summary</h3>
+        <p>The two chain projects, once a single coupled pair, are now independent. <b class="k">0state</b> has cut loose from frankcoin and mines its own franchise, the <b class="k">STATE</b> token. <b class="k">frankcoin</b> has left the commune to become a standalone memecoin &mdash; mined and freely traded &mdash; led by the <b class="k">General Secretary</b>. All three on-chain programs were built, deployed or upgraded, and verified on devnet.</p>
+      </section>
+
+      <section>
+        <h3>What changed</h3>
+        <ul>
+          <li><b>0state &rarr; a communist CityDAO.</b> A new proof-of-work program mints STATE. Mining STATE is the sole, un-buyable qualification for citizenship; one STATE in ten is routed to a keyless <b>commons treasury</b>, spent only by a passed vote. No steward, no admin &mdash; fully autonomous.</li>
+          <li><b>frankcoin &rarr; a memecoin under the General Secretary.</b> The 10% levy and the 0state coupling were removed; every mined frank now goes to the miner. Democratic centralism, enforced in bytecode &mdash; the Party is the code.</li>
+          <li><b>zerostate</b> (the voting program) now reads STATE proofs for membership and vote-weight, not frankcoin's.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>On the money</h3>
+        <p>STATE and frankcoin are both <b class="k">uncapped</b>, on a Dogecoin-style model: the reward halves across a distribution phase, then floors at a perpetual 1-per-proof tail &mdash; emission never stops, and percentage inflation trends to zero. frankcoin's franks are SPL tokens with <b class="k">no freeze authority</b> and a keyless mint authority; no program change can touch, freeze, or seize them.</p>
+      </section>
+
+      <section>
+        <h3>On-chain, as deployed</h3>
+        <div class="ledger">
+          <div class="row"><dt>General Secretary</dt><dd>D6Ncr7cpk5YEQR4z1foysf25FuvEq8pagHRKMmJpKT76</dd></div>
+          <div class="row"><dt>frankcoin</dt><dd>61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8 <span class="ok">&mdash; memecoin</span></dd></div>
+          <div class="row"><dt>state (STATE)</dt><dd>2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE <span class="ok">&mdash; the franchise</span></dd></div>
+          <div class="row"><dt>STATE mint</dt><dd>67Um54xXN64JbmFkMeG6SybceR46az1SzvA6ZrywDBKs</dd></div>
+          <div class="row"><dt>zerostate</dt><dd>BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9 <span class="ok">&mdash; the vote</span></dd></div>
+        </div>
+      </section>
+
+      <section>
+        <h3>To know</h3>
+        <div class="flag">
+          <p><b>Membership reset.</b> Because 0state no longer reads frankcoin, standing earned by mining frankcoin is void. Citizenship now resets to whoever mines STATE.</p>
+        </div>
+        <div class="disc">Devnet only. Devnet tokens cannot be sold and are worth nothing &mdash; nothing here is an offer, a sale, a security, or financial advice.</div>
+      </section>
+    </div>
+  </article>
+
+  <footer>
+    max tindall inc &middot; the code is the Party, and the Party is supreme<br>
+    filed 2026-08-18 &middot; 0state &middot; state &middot; zerostate &middot; frankcoin
+  </footer>
+
+</div>
+</body>
+</html>

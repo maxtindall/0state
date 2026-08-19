@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>0state</title>
-<meta name="description" content="0state — an autonomous organization governed by the miners of frankcoin. franks are a currency; the vote is earned only by mining and cannot be traded.">
+<meta name="description" content="0state — CityDAO built communist: an autonomous organization governed by the miners of STATE. The franchise is earned only by mining and cannot be bought; everything is held in common.">
 <style>
   :root{
     --black:#000;
@@ -148,31 +148,35 @@
 <div class="page">
 
   <h1 class="brand" data-type>0state D.A.O.</h1>
-  <div class="tag" data-type>A decentralized autonomous organization governed by the miners of frankcoin.</div>
+  <div class="tag" data-type>CityDAO, built communist &mdash; governed by the miners of STATE.</div>
 
   <nav class="links" aria-label="0state links">
-    <a href="https://frankcoin.website" title="frankcoin — the currency" aria-label="frankcoin">
+    <a href="https://solscan.io/account/2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE?cluster=devnet" title="STATE — the mined franchise" aria-label="STATE token" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8h5M9.5 12h4M9.5 8v8"/></svg>
-      <span>frankcoin</span>
+      <span>STATE</span>
     </a>
     <a href="https://x.com/0state_DAO" title="0state D.A.O. on X" aria-label="0state D.A.O. on X" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="./memos/" title="0state memos — dispatches from the Central Committee" aria-label="memos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h11l5 5v13H4z"/><path d="M15 3v5h5M8 13h8M8 17h5"/></svg>
+      <span>memos</span>
     </a>
   </nav>
 
   <section>
     <div class="q" data-type>introduction</div>
-    <p data-type>0state is an autonomous organization governed by the miners of frankcoin. Membership is established through proof-of-work rather than purchase: franks serve as a currency, but the right to participate in governance is distinct from the right to hold them.</p>
+    <p data-type>0state is CityDAO built communist. CityDAO's real innovation was legal — a Wyoming DAO wrapper that let a token-governed collective hold real-world property. 0state keeps that wrapper and inverts its economics: membership cannot be bought, and everything the commune holds is held in common. Membership is established through proof-of-work — by mining STATE — not by purchase.</p>
   </section>
 
   <section>
     <div class="q" data-type>governance</div>
-    <p data-type>franks are a currency — they may be earned, held, and freely traded. Governance rights are held separately. The franchise is acquired only through mining and is non-transferable, so no accumulation of capital can acquire control of the organization. Each member holds one vote; voting weight reflects recent mining activity and diminishes with inactivity. Proposals are decided by simple plurality: the option with the most votes prevails.</p>
+    <p data-type>STATE is a currency — it may be earned, held, and traded. The franchise is held separately. It is acquired only through mining and is non-transferable, so no accumulation of capital can acquire control of the organization: the vote reads the record of your labour, not your balance. Each member holds one vote; voting weight reflects recent mining and diminishes with inactivity. Proposals are decided by simple plurality. One STATE in every ten mined flows to the commons treasury — the collective fund — spent only by a passed vote.</p>
   </section>
 
   <section>
     <div class="q" data-type>membership</div>
-    <p data-type>Membership is open and permissionless. Mining a single frankcoin proof confers it — there is no application and no admitting authority. It is contingent on continued participation; a member who ceases to mine gradually forfeits standing. The reference miner is available at <a href="https://frankcoin.website">frankcoin.website</a>.</p>
+    <p data-type>Membership is open and permissionless. Mining a single STATE proof confers it — there is no application and no admitting authority. It is contingent on continued participation; a member who ceases to mine gradually forfeits standing. The reference miner and full source live at <a href="https://github.com/maxtindall/0state">github.com/maxtindall/0state</a>.</p>
   </section>
 
   <section>
@@ -198,24 +202,24 @@
     <div class="cli"><span class="cm"># one time — trust the tap (Homebrew gates third-party formulae)</span>
 <span class="c">$ brew tap maxtindall/frankcoin && brew trust maxtindall/frankcoin</span>
 
-<span class="cm"># 1 — install the miner (macOS)</span>
-<span class="c">$ brew install maxtindall/frankcoin/frankcoin</span>
-
-<span class="cm"># 2 — mine; one accepted proof qualifies you</span>
-<span class="c">$ frankmine</span>
-
-<span class="cm"># 3 — install the client (membership is automatic once you have mined)</span>
+<span class="cm"># 1 — install the 0state client (ships the terminal + the STATE miner)</span>
 <span class="c">$ brew install maxtindall/frankcoin/0state</span>
 
-<span class="cm"># 4 — take part</span>
+<span class="cm"># 2 — mine STATE; one accepted proof makes you a citizen</span>
+<span class="c">$ statemine</span>
+
+<span class="cm"># 3 — take part (membership is automatic once you have mined STATE)</span>
 <span class="c">$ 0state status</span>                   <span class="cm"># the organization, and your standing</span>
 <span class="c">$ 0state proposals</span>                <span class="cm"># open questions and their tallies</span>
 <span class="c">$ 0state propose "&lt;title&gt;" --body "&hellip;"</span>
-<span class="c">$ 0state vote &lt;id&gt; yes|no|abstain</span></div>
-    <p class="aside" data-type>Signing happens locally with your own Solana keypair; nothing is custodied.</p>
+<span class="c">$ 0state vote &lt;id&gt; yes|no|abstain</span>
+
+<span class="cm"># later — pull updates any time</span>
+<span class="c">$ brew upgrade maxtindall/frankcoin/0state</span></div>
+    <p class="aside" data-type>Signing happens locally with your own Solana keypair; nothing is custodied. STATE is uncapped — a Dogecoin-style model — so there is always something to mine.</p>
   </section>
 
-  <div class="disc" data-type>0state D.A.O. is currently live on Solana's devnet. Its franks are a test network's and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice.</div>
+  <div class="disc" data-type>0state D.A.O. is currently live on Solana's devnet. Its STATE tokens are a test network's and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice.</div>
 
   <footer>
     &copy; 0state D.A.O. 2026
@@ -264,17 +268,17 @@
   // time so the page needs no crypto library; verified against the deployment.
   var DAO_PDA='7Tq8KzAALZrv87u2WQ3iEwGJHxSS6PkEeE8Bt5NLdzwD';
 
-  // The DAO treasury's token account (frankcoin program PDA vault). 10% of every
-  // reward is minted here; spent only by proposal and vote. Precomputed.
-  var TREASURY_ATA='7PnTVpAsxuK3FiEt77ejhsqJj8xu2H55Q4zLQ1nJM4VY';
+  // The commons treasury's token account (STATE program PDA vault). 10% of every
+  // mined STATE is routed here; spent only by proposal and vote. Precomputed.
+  var TREASURY_ATA='9sRN1jpD3aZNyxdYbBoxjxhE5xeeu7tSjeAyaPpB7tqA';
 
-  // Membership is automatic: members = miners. Count the frankcoin Proof
-  // accounts (dataSize 997) whose count field (offset 88) is >= 1.
-  var FRANKCOIN='61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8';
+  // Membership is automatic: members = miners. Count the STATE Proof accounts
+  // (dataSize 997) whose count field (offset 88) is >= 1.
+  var STATE_PROGRAM='2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE';
   function reportMiners(){
     fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
       body:JSON.stringify({jsonrpc:'2.0',id:4,method:'getProgramAccounts',
-        params:[FRANKCOIN,{encoding:'base64',commitment:'confirmed',dataSlice:{offset:88,length:8},filters:[{dataSize:997}]}]})})
+        params:[STATE_PROGRAM,{encoding:'base64',commitment:'confirmed',dataSlice:{offset:88,length:8},filters:[{dataSize:997}]}]})})
     .then(function(r){return r.json();})
     .then(function(j){if(!j.result)return;var n=0;
       j.result.forEach(function(a){if(u64(b64ToBytes(a.account.data[0]),0)>=1)n++;});
@@ -295,7 +299,7 @@
       body:JSON.stringify({jsonrpc:'2.0',id:3,method:'getTokenAccountBalance',params:[TREASURY_ATA,{commitment:'confirmed'}]})})
     .then(function(r){return r.json();})
     .then(function(j){var v=j.result&&j.result.value;
-      put('fTreasury', v?(Number(v.uiAmount).toLocaleString('en-US')+' franks'):'0 franks');})
+      put('fTreasury', v?(Number(v.uiAmount).toLocaleString('en-US')+' STATE'):'0 STATE');})
     .catch(function(){});
   }
   function report(){

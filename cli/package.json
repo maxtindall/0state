@@ -1,9 +1,9 @@
 {
   "name": "0state-cli",
-  "version": "1.0.0",
-  "description": "Command-line client for 0state — a political organization governed by the miners of frankcoin.",
+  "version": "2.0.0",
+  "description": "Command-line client for 0state — a communist DAO governed by the miners of STATE.",
   "type": "module",
-  "bin": { "0state": "./0state.mjs" },
+  "bin": { "0state": "./0state.mjs", "statemine": "./mine.mjs" },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@solana/web3.js": "^1.95.0",

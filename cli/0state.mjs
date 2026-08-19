@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 // 0state — command-line client (v2, miners-only).
 //
-// 0state is an autonomous organization governed by the miners of frankcoin.
-// franks are a currency; the vote is earned only by mining and cannot be traded.
-// Membership is permissionless: mine, then `join`. Voting weight is sub-linear
-// in franks mined and decays with inactivity. Signs with YOUR keypair.
+// 0state is an autonomous organization governed by the miners of STATE.
+// STATE is a currency; the vote is earned only by mining and cannot be traded.
+// Membership is permissionless and automatic: mine STATE (`node mine.mjs`) and
+// you are a citizen. Voting weight is sub-linear in STATE mined and decays with
+// inactivity. Signs with YOUR keypair.
 //
 // Usage:
 //   0state status                       the organization, and your standing
 //   0state address       [--key PATH]   the wallet this would act as
-//   (membership is automatic — mining frankcoin is the only qualification)
+//   (membership is automatic — mining STATE is the only qualification)
 //   0state proposals                    list proposals and weighted tallies
 //   0state propose "<title>" [--body S] put a question (members only)
-//   0state propose-spend <to> <franks> "<title>"   propose a treasury spend
+//   0state propose-spend <to> <STATE> "<title>"   propose a treasury spend
 //   0state vote <id> <yes|no|abstain>   cast your weighted vote (members only)
 //   0state execute <id>                 enact a passed spending proposal
 //   0state nonce-init                   set up offline signing (one-time, online)
@@ -32,8 +33,8 @@ import { Connection, Keypair, PublicKey, SystemProgram, Transaction, NONCE_ACCOU
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ZEROSTATE = new PublicKey('BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9');
-const FRANKCOIN = new PublicKey('61yBp4FQSXq6qxS1Scny8LRBNDLDoNQBKupofVSyyHL8');
-const ONE_FRANK = 1_000_000_000;
+const STATE = new PublicKey('2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE');
+const ONE_STATE = 1_000_000_000;
 const HALF_LIFE = 90 * 24 * 60 * 60;
 
 function arg(name, def) { const i = process.argv.indexOf('--' + name); return i >= 0 ? process.argv[i + 1] : def; }
@@ -52,14 +53,14 @@ const u64le = (n) => { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(n));
 const daoPda = () => pda([Buffer.from('dao')]);
 const proposalPda = (id) => pda([Buffer.from('proposal'), u64le(id)]);
 const ballotPda = (proposal, voter) => pda([Buffer.from('ballot'), proposal.toBuffer(), voter.toBuffer()]);
-const proofPda = (w) => pda([Buffer.from('proof'), w.toBuffer()], FRANKCOIN);
-// frankcoin treasury (program PDA vault) + its token account
+const proofPda = (w) => pda([Buffer.from('proof'), w.toBuffer()], STATE);
+// STATE treasury (program PDA vault) + its token account
 const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ATA_PROG = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
-const mintPda = () => pda([Buffer.from('mint')], FRANKCOIN);
-const treasuryPda = () => pda([Buffer.from('treasury')], FRANKCOIN);
+const mintPda = () => pda([Buffer.from('mint')], STATE);
+const treasuryPda = () => pda([Buffer.from('treasury')], STATE);
 const ata = (owner, mint) => PublicKey.findProgramAddressSync([owner.toBuffer(), TOKEN.toBuffer(), mint.toBuffer()], ATA_PROG)[0];
-const spentPda = (proposal) => pda([Buffer.from('spent'), proposal.toBuffer()], FRANKCOIN);
+const spentPda = (proposal) => pda([Buffer.from('spent'), proposal.toBuffer()], STATE);
 
 // A per-wallet durable nonce account (derived by seed) so a transaction can be
 // signed OFFLINE and stay valid indefinitely — then carried over any channel
@@ -73,7 +74,7 @@ const CHOICE_NAME = ['no', 'yes', 'abstain'];
 
 function isqrt(n) { if (n < 2n) return n; let x = n, y = (x + 1n) / 2n; while (y < x) { x = y; y = (x + n / x) / 2n; } return x; }
 
-// Read the frankcoin Proof account raw (v2's IDL doesn't expose it) and compute
+// Read the STATE Proof account raw (v2's IDL doesn't expose it) and compute
 // the voter's weight exactly as the program does, for display.
 async function weightFor(wallet, nowSec) {
   const info = await conn.getAccountInfo(proofPda(wallet));
@@ -81,17 +82,17 @@ async function weightFor(wallet, nowSec) {
   const d = info.data;            // 8 disc + miner(32) + challenge(32) + last_claim(i64) + total_mined(u64) + count(u64)
   const lastClaim = Number(d.readBigInt64LE(8 + 64));
   const total = d.readBigUInt64LE(8 + 64 + 8);
-  const whole = total / BigInt(ONE_FRANK);
+  const whole = total / BigInt(ONE_STATE);
   const idle = Math.max(0, nowSec - lastClaim);
   const halvings = BigInt(Math.min(Math.floor(idle / HALF_LIFE), 63));
   return (1n + isqrt(whole >> halvings)).toString();
 }
 
-// The membership count = distinct miners = frankcoin Proof accounts with count>=1.
+// The membership count = distinct miners = STATE Proof accounts with count>=1.
 // (Membership is automatic, so there is no on-chain roster to read.)
 async function countMiners() {
   try {
-    const res = await conn.getProgramAccounts(FRANKCOIN, {
+    const res = await conn.getProgramAccounts(STATE, {
       dataSlice: { offset: 88, length: 8 }, // the Proof.count field
       filters: [{ dataSize: 997 }],
     });
@@ -136,7 +137,7 @@ async function main() {
 
     case 'status': {
       const dao = await fetchDao(p);
-      console.log('0state — an autonomous organization governed by the miners of frankcoin');
+      console.log('0state — an autonomous organization governed by the miners of STATE');
       console.log('  program     ', ZEROSTATE.toBase58());
       console.log('  founder     ', dao.founder.toBase58());
       console.log('  members     ', (await countMiners()) ?? '—', '(miners — every wallet that has mined)');
@@ -144,16 +145,16 @@ async function main() {
       console.log('  voting period', (dao.votingPeriod.toNumber() / 86400).toFixed(0), 'days');
       try {
         const b = await conn.getTokenAccountBalance(ata(treasuryPda(), mintPda()));
-        console.log('  treasury    ', Number(b.value.uiAmount).toLocaleString('en-US'), 'franks (spent only by proposal + vote)');
-      } catch { console.log('  treasury    ', '0 franks'); }
+        console.log('  treasury    ', Number(b.value.uiAmount).toLocaleString('en-US'), 'STATE (spent only by proposal + vote)');
+      } catch { console.log('  treasury    ', '0 STATE'); }
       console.log('');
       console.log('  you         ', me.toBase58());
       const w = await weightFor(me, Math.floor(Date.now() / 1000));
       if (w !== null) {
         console.log('  member      ', 'yes — you have mined (membership is automatic)');
-        console.log('  voting weight', w, '(1 + isqrt of active mined franks; decays if you stop mining)');
+        console.log('  voting weight', w, '(1 + isqrt of active mined STATE; decays if you stop mining)');
       } else {
-        console.log('  member      ', 'no — mine frankcoin first (frankcoin.website); membership is then automatic');
+        console.log('  member      ', 'no — mine STATE first (github.com/maxtindall/0state); membership is then automatic');
       }
       break;
     }
@@ -175,7 +176,7 @@ async function main() {
         if (pr.spendAmount > 0) {
           const passed = !open && pr.yes > pr.no;
           const executed = !!(await conn.getAccountInfo(spentPda(proposalPda(pr.id))));
-          console.log(`     SPEND ${(pr.spendAmount / ONE_FRANK).toLocaleString('en-US')} franks -> ${pr.spendRecipient.toBase58()}`
+          console.log(`     SPEND ${(pr.spendAmount / ONE_STATE).toLocaleString('en-US')} STATE -> ${pr.spendRecipient.toBase58()}`
             + `  [${executed ? 'executed' : passed ? 'passed — run `0state execute ' + pr.id + '`' : open ? 'voting' : 'rejected'}]`);
         }
       }
@@ -203,17 +204,17 @@ async function main() {
 
     case 'propose-spend': {
       const w = loadWallet();
-      const recipient = new PublicKey(pos[0] || die('usage: 0state propose-spend <recipient> <franks> "<title>" [--body "text"]'));
-      const franks = Number(pos[1]);
+      const recipient = new PublicKey(pos[0] || die('usage: 0state propose-spend <recipient> <STATE> "<title>" [--body "text"]'));
+      const units = Number(pos[1]);
       const title = pos[2];
-      if (!(franks > 0)) die('amount (franks) must be a positive number');
-      if (!title) die('usage: 0state propose-spend <recipient> <franks> "<title>"');
+      if (!(units > 0)) die("amount (STATE) must be a positive number");
+      if (!title) die('usage: 0state propose-spend <recipient> <STATE> "<title>"');
       if (Buffer.byteLength(title) > 96) die('title too long (max 96 bytes)');
       const bodyHash = [...Buffer.from(keccak256.arrayBuffer(Buffer.from(arg('body', ''))))];
-      const amount = new anchor.BN(Math.round(franks * ONE_FRANK).toString());
+      const amount = new anchor.BN(Math.round(units * ONE_STATE).toString());
       const dao = await fetchDao(p);
       const id = dao.proposalCount.toNumber();
-      console.log(`proposing spend #${id}: ${franks} franks -> ${recipient.toBase58()}…`);
+      console.log(`proposing spend #${id}: ${units} STATE -> ${recipient.toBase58()}…`);
       const sig = await p.methods.propose(title, bodyHash, recipient, amount).accounts({
         proposer: w.publicKey, dao: daoPda(), proof: proofPda(w.publicKey),
         proposal: proposalPda(id), systemProgram: SystemProgram.programId,
@@ -234,9 +235,9 @@ async function main() {
       if (!info) die(`proposal #${id} not found`);
       const pr = decodeProposal(info.data);
       if (!(pr.spendAmount > 0)) die(`#${id} is not a spending proposal`);
-      const fc = new anchor.Program(loadIdl('frankcoin.idl.json'), programProvider(w));
+      const fc = new anchor.Program(loadIdl('state.idl.json'), programProvider(w));
       const mint = mintPda(), treasury = treasuryPda();
-      console.log(`executing spend #${id}: ${(pr.spendAmount / ONE_FRANK).toLocaleString('en-US')} franks -> ${pr.spendRecipient.toBase58()}…`);
+      console.log(`executing spend #${id}: ${(pr.spendAmount / ONE_STATE).toLocaleString('en-US')} STATE -> ${pr.spendRecipient.toBase58()}…`);
       const sig = await fc.methods.treasuryWithdraw().accounts({
         caller: w.publicKey, mint, treasury, treasuryAta: ata(treasury, mint),
         recipient: pr.spendRecipient, recipientAta: ata(pr.spendRecipient, mint),
