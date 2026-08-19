@@ -1,0 +1,38 @@
+[package]
+name = "zerostate"
+version = "0.1.0"
+description = "0state — an autonomous organization governed by the miners of frankcoin"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "zerostate"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+# 0state is fully self-contained: it reads frankcoin's Proof account with a
+# vendored, layout-identical `Proof` type (see state.rs), always guarded by
+# `seeds::program = FRANKCOIN_PROGRAM` so the account is proven to be genuinely
+# owned by frankcoin. No build-time dependency on the frankcoin crate.
+anchor-lang = "1.0.2"
+
+[dev-dependencies]
+litesvm = "0.10.0"
+anchor-spl = "1.0.2"
+solana-keccak-hasher = "3.1.0"
+solana-pubkey = "3.0.0"
+solana-account = "3.0.0"
+solana-message = "3.0.1"
+solana-transaction = "3.0.2"
+solana-signer = "3.0.0"
+solana-keypair = "3.0.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

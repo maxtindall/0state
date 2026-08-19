@@ -1,91 +1,106 @@
 # 0state
 
-A closed economic commune, run as an artwork — *a computer with assets*. Its
-currency is [frankcoin](https://github.com/maxtindall/frankcoin); its members
-are miners who were invited in; its decisions are one member, one vote.
+CityDAO, built communist — a closed economic commune run as an artwork, *a
+computer with assets*. Its franchise is **STATE**, a token you can only get by
+mining; its members are its miners; its assets are held in common; its decisions
+are made by weighted vote of labour, never of wealth.
 
-    program   CcEbfypSNbA1YKPsW7PVLRQzzEnKKMcPXBL7CxDW9Joz   (devnet)
-    site      https://0state.website
+    state       2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE   (devnet · the STATE token)
+    zerostate   BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9   (devnet · the vote)
+    site        https://0state.website
+    memos       https://0state.website/memos
 
 ## The idea
 
 An economic entity as art. 0state holds assets and governs them collectively —
-but not by wealth. Governance is **communist in the literal sense**: power
-comes from labour and membership, never from holdings.
+but not by wealth. Governance is **communist in the literal sense**: power comes
+from labour, never from holdings.
 
-- **Mining is the floor.** To be eligible you must have mined frankcoin. The
-  franchise reads your on-chain *Proof of work*, not your token balance, so
-  holding franks you were given counts for nothing — only franks you mined.
-- **Admission is by trust.** Eligibility is not entry. A member is admitted by
-  the commune's authority, one at a time. This is a closed commune, not an open
-  door, and that is what makes it Sybil-proof: you cannot farm your way into a
-  room you are invited to by name.
-- **Once inside, everyone is equal.** One member, one vote. No weighting, no
-  proposer class. A member who holds nothing has the same voice as one who
-  holds a fortune.
+- **The franchise is mined, never bought.** To be a citizen you must have mined
+  STATE. The vote reads your on-chain *Proof of work*, not your token balance, so
+  holding STATE you were given counts for nothing — only STATE you mined. You may
+  trade the token freely; trading it conveys none of the franchise.
+- **Membership is automatic.** Having mined a single STATE proof makes you a
+  citizen — no application, no admitting authority, no join step. The member set
+  is just the set of miners, enumerable on-chain.
+- **Everything is held in common.** One STATE in every ten mined is routed to a
+  keyless commons treasury; it leaves only by a passed vote. Real-world assets a
+  0state legal wrapper acquires are held undivided — no parcels, no private stake.
 
-## The program
+## The two programs
 
-A deliberately small Anchor program. It is the **voting layer only** — it holds
-no funds, has no treasury, and cannot move a lamport. Any assets a 0state entity
-controls live behind a separate multisig or legal wrapper that treats these
-votes as its mandate; they never sit inside this program.
+0state is two small Anchor programs. **frankcoin** (the memecoin) is unrelated
+and lives in [its own repo](https://github.com/maxtindall/frankcoin).
+
+### `state` — the mined franchise (and the commons)
+
+A proof-of-work token. Minted from zero, no admin inflation, fully autonomous —
+no steward, no owner, no privileged key. Uncapped: the reward halves across a
+distribution phase, then floors at a perpetual 1-per-proof tail. Ten percent of
+every reward is minted to the commons treasury, spendable only by a passed
+0state vote.
+
+| instruction | who | what |
+|---|---|---|
+| `initialize` | founder | Create the mint + config. Once. |
+| `register` / `mine` | any wallet | Mine STATE. One accepted proof makes you a citizen. |
+| `treasury_withdraw` | anyone | Enact a *passed* 0state spending proposal. Single-use. |
+
+### `zerostate` — the vote
+
+The voting layer only — it holds no funds and cannot move a lamport. Membership
+and weight are read live from a citizen's STATE `Proof`.
 
 | instruction | who | what |
 |---|---|---|
 | `initialize` | founder | Found the commune. Once. |
-| `admit` | admit authority | Admit a member who has mined. |
-| `revoke` | admit authority | Remove a member; close their citizen account. |
-| `set_admit_authority` | admit authority | Hand the door to a multisig, or the DAO itself. |
-| `propose` | any citizen | Put a question. Body lives off-chain; a hash pins it. |
-| `vote` | any citizen | One vote — 0 no, 1 yes, 2 abstain. |
+| `propose` | any citizen | Put a question. Body off-chain, pinned by hash. Spending proposals name a recipient + amount. |
+| `vote` | any citizen | One weighted vote — 0 no, 1 yes, 2 abstain. |
 
-Two structural guarantees, not merely checked but made impossible to violate:
+Two structural guarantees, made impossible to violate:
 
-- **The mining gate cannot be forged.** `admit` verifies the member's frankcoin
-  Proof through Anchor's `Account<Proof>`, which only deserializes an account
-  genuinely owned by the frankcoin program.
-- **No one votes twice.** A ballot is a PDA seeded by `(proposal, citizen)`. A
-  second vote fails at account creation, not at a check that could be forgotten.
+- **The mining gate cannot be forged.** Voting weight is read through a `Proof`
+  account proven to be owned by the `state` program — never a token balance.
+- **No one votes twice.** A ballot is a PDA seeded by `(proposal, citizen)`; a
+  second vote fails at account creation.
 
-### Layout
+**Voting weight** is `1 + √(active mined STATE)` — sub-linear, so no miner
+dominates, and decaying with inactivity, so influence tracks recent labour.
+First-past-the-post at close.
 
-    program/
-      src/lib.rs                 the program surface
-      src/state.rs               Dao · Citizen · Proposal · Ballot
-      src/constants.rs           the frankcoin program id, seeds, the labour floor
-      src/instructions/          one file per instruction
-      test_dao.rs                the litesvm end-to-end test
+## Layout
 
-The program is developed inside the frankcoin Anchor workspace, because it
-depends on frankcoin's real `Proof` type to read the mining gate. This directory
-is a readable snapshot for auditability.
+    programs/state/       the STATE proof-of-work token + commons treasury
+    programs/zerostate/   the voting layer (reads STATE proofs)
+    cli/                  the `0state` terminal and the `statemine` miner
+    site/                 0state.website (+ /memos)
+    Anchor.toml           workspace: state + zerostate, devnet
 
-### Tests
+This repo is a **buildable mirror of the deployed devnet programs.** Reproduce it:
 
-Verified end to end in litesvm: two miners are admitted by the authority; a
-wallet that never mined cannot be admitted *even by the authority*; a
-non-authority cannot admit anyone; a citizen cannot vote twice; a non-citizen
-cannot vote; and revoke is authority-only and closes the account.
+    anchor build --ignore-keys
 
-## Roadmap
+The resulting `state.so` / `zerostate.so` and IDL addresses match what is on
+devnet. (Use `--ignore-keys`; the program IDs are fixed in source.)
 
-- **Master voting shares** — a second, biometric-NFT voting class above the
-  commune, issued by the site or unlocked by holding a threshold of franks. The
-  config already reserves space for it.
-- **Custody** — when the commune holds real assets, they sit in a multisig
-  (e.g. Squads), with these votes as the documented mandate. Never in this
-  program.
-- **Legal wrapper** — a Wyoming DAO LLC, so the entity can hold funds and,
-  eventually, land. This needs a lawyer, not code.
+## Take part
+
+    brew tap maxtindall/frankcoin && brew trust maxtindall/frankcoin
+    brew install maxtindall/frankcoin/0state    # installs `0state` + `statemine`
+    statemine                                   # mine STATE → become a citizen
+    0state status                               # the commune, and your standing
+    0state propose "<title>" --body "…"
+    0state vote <id> yes|no|abstain
+    brew upgrade maxtindall/frankcoin/0state     # pull updates
+
+Signing happens locally with your own Solana keypair; nothing is custodied.
 
 ## What this is not
 
 0state is an artwork about how a small economy might govern itself. It runs on
-Solana's **devnet**; its franks and its ledger are a test network's and are
-worth nothing. Nothing here is an offer, a sale, a security, or financial
-advice. Membership is by invitation and sells nothing.
+Solana's **devnet**; its STATE tokens and its ledger are a test network's and are
+worth nothing. Nothing here is an offer, a sale, a security, or financial advice.
 
-MIT licensed.
+MIT licensed. See [GOVERNANCE.md](GOVERNANCE.md) for the legal framing (UNA → DUNA).
 
 *A Max Tindall Inc project.*

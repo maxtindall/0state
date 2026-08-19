@@ -11,14 +11,14 @@ pub use state::*;
 
 declare_id!("BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9");
 
-/// 0state — an autonomous organization governed by the miners of frankcoin.
+/// 0state — an autonomous organization governed by the miners of STATE.
 ///
-/// franks are a currency: earned, held, and freely traded. The franchise is
+/// STATE are a currency: earned, held, and freely traded. The franchise is
 /// something else. Membership is acquired only by MINING and is non-transferable,
 /// so no accumulation of capital can acquire control of the organization. Money
 /// and the vote are held separately.
 ///
-/// Membership is automatic — having mined frankcoin (a Proof account) is the
+/// Membership is automatic — having mined STATE (a Proof account) is the
 /// entire qualification; there is no join step and no admitting authority.
 /// Voting weight reflects a member's mining, tempered sub-linearly and decaying
 /// with inactivity, so influence tracks recent labour, not wealth. Proposals are
@@ -36,7 +36,7 @@ pub mod zerostate {
     /// Put a question to the membership. Members only. For an ordinary proposal
     /// pass a default recipient and amount 0; for a spending proposal pass the
     /// treasury recipient and amount — if it passes, anyone may execute the
-    /// frankcoin `treasury_withdraw` it authorizes.
+    /// STATE `treasury_withdraw` it authorizes.
     pub fn propose(
         ctx: Context<Propose>,
         title: String,
@@ -48,7 +48,7 @@ pub mod zerostate {
     }
 
     /// Cast a vote: 0 no, 1 yes, 2 abstain. Weight is derived from the member's
-    /// (decaying) mining, read live from their frankcoin Proof.
+    /// (decaying) mining, read live from their STATE Proof.
     pub fn vote(ctx: Context<Vote>, choice: u8) -> Result<()> {
         instructions::vote::handler(ctx, choice)
     }

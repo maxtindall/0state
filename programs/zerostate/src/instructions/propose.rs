@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
-use frankcoin::state::Proof;
-use crate::{constants::*, error::DaoError, state::{Dao, Proposal}};
+use crate::{constants::*, error::DaoError, state::{Dao, Proposal, Proof}};
 
 /// Put a question to the membership. Members only — membership is automatic:
-/// the proposer's frankcoin Proof (having mined) is the qualification.
+/// the proposer's STATE Proof (having mined) is the qualification.
 #[derive(Accounts)]
 pub struct Propose<'info> {
     #[account(mut)]
@@ -12,11 +11,11 @@ pub struct Propose<'info> {
     #[account(mut, seeds = [DAO_SEED], bump = dao.bump)]
     pub dao: Account<'info, Dao>,
 
-    /// The proposer's frankcoin Proof — proof of membership (having mined).
+    /// The proposer's STATE Proof — proof of membership (having mined).
     #[account(
-        seeds = [frankcoin::constants::PROOF_SEED, proposer.key().as_ref()],
+        seeds = [PROOF_SEED, proposer.key().as_ref()],
         bump = proof.bump,
-        seeds::program = FRANKCOIN_PROGRAM,
+        seeds::program = STATE_PROGRAM,
         constraint = proof.miner == proposer.key() @ DaoError::ProofOwnerMismatch,
     )]
     pub proof: Account<'info, Proof>,

@@ -1,11 +1,10 @@
 use anchor_lang::prelude::*;
-use frankcoin::state::Proof;
 
-use crate::{constants::*, error::DaoError, state::{Proposal, Ballot}};
+use crate::{constants::*, error::DaoError, state::{Proposal, Ballot, Proof}};
 
-/// Cast one vote. Membership is automatic: having mined frankcoin (a Proof with
+/// Cast one vote. Membership is automatic: having mined STATE (a Proof with
 /// at least MIN_PROOFS_TO_JOIN accepted proofs) is the whole qualification — no
-/// join, no roster. Weight is derived live from that Proof: sub-linear in franks
+/// join, no roster. Weight is derived live from that Proof: sub-linear in STATE
 /// mined and decaying with time since the last mine. The ballot account is
 /// created once per (proposal, voter), so a second vote fails at creation.
 #[derive(Accounts)]
@@ -13,12 +12,12 @@ pub struct Vote<'info> {
     #[account(mut)]
     pub voter: Signer<'info>,
 
-    /// The voter's frankcoin Proof — their membership card and their weight.
-    /// Genuinely owned by frankcoin and tied to the voter by seed.
+    /// The voter's STATE Proof — their membership card and their weight.
+    /// Genuinely owned by STATE and tied to the voter by seed.
     #[account(
-        seeds = [frankcoin::constants::PROOF_SEED, voter.key().as_ref()],
+        seeds = [PROOF_SEED, voter.key().as_ref()],
         bump = proof.bump,
-        seeds::program = FRANKCOIN_PROGRAM,
+        seeds::program = STATE_PROGRAM,
         constraint = proof.miner == voter.key() @ DaoError::ProofOwnerMismatch,
     )]
     pub proof: Account<'info, Proof>,
@@ -51,11 +50,11 @@ fn isqrt(n: u64) -> u64 {
 }
 
 /// Voting weight: base 1 (equal floor for every member), plus the integer square
-/// root of *active* mined franks — total mined, halved once per HALF_LIFE of
+/// root of *active* mined STATE — total mined, halved once per HALF_LIFE of
 /// silence since the last accepted proof, so stopping mining decays weight back
 /// toward the floor.
 fn weight_for(proof: &Proof, now: i64) -> u64 {
-    let whole = proof.total_mined / ONE_FRANK;
+    let whole = proof.total_mined / ONE_STATE;
     let idle = now.saturating_sub(proof.last_claim_ts).max(0);
     let halvings = (idle / HALF_LIFE_SECS).min(63) as u32;
     let active = whole >> halvings;

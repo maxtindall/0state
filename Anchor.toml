@@ -1,0 +1,25 @@
+[toolchain]
+package_manager = "yarn"
+
+[features]
+resolution = true
+skip-lint = false
+
+# The two programs 0state owns, mirrored from the deployed devnet build. frankcoin
+# (the memecoin) lives in its own repo; 0state governs STATE only.
+[programs.localnet]
+state = "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE"
+zerostate = "BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9"
+
+[programs.devnet]
+state = "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE"
+zerostate = "BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
+
+[hooks]
