@@ -1,5 +1,5 @@
 class Zerostate < Formula
-  desc "Terminal and STATE miner for 0state — a communist DAO of the miners of STATE"
+  desc "0state terminal — a CityDAO-style commune; citizenship is a transferable Citizen NFT"
   homepage "https://0state.website"
   url "https://github.com/maxtindall/0state/archive/refs/tags/cli-v3.0.0.tar.gz"
   sha256 "3c552f1e2fde6b142976e0e61fdae6f7773e15bcab7cf482fc376d6fc00c85d2"
