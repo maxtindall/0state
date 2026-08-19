@@ -1,8 +1,10 @@
 use anchor_lang::prelude::*;
-use crate::{constants::*, error::DaoError, state::{Dao, Proposal, Proof}};
+use anchor_spl::token::{Mint, TokenAccount};
 
-/// Put a question to the membership. Members only — membership is automatic:
-/// the proposer's STATE Proof (having mined) is the qualification.
+use crate::{constants::*, error::DaoError, state::{Dao, Proposal}};
+
+/// Put a question to the membership. Citizens only — the proposer must hold a
+/// Citizen NFT (verified the same way a vote is).
 #[derive(Accounts)]
 pub struct Propose<'info> {
     #[account(mut)]
@@ -11,14 +13,26 @@ pub struct Propose<'info> {
     #[account(mut, seeds = [DAO_SEED], bump = dao.bump)]
     pub dao: Account<'info, Dao>,
 
-    /// The proposer's STATE Proof — proof of membership (having mined).
+    /// The proposer's Citizen NFT mint.
+    pub citizen_mint: Account<'info, Mint>,
+
+    /// The proposer's token account, proving they hold the NFT.
     #[account(
-        seeds = [PROOF_SEED, proposer.key().as_ref()],
-        bump = proof.bump,
-        seeds::program = STATE_PROGRAM,
-        constraint = proof.miner == proposer.key() @ DaoError::ProofOwnerMismatch,
+        constraint = proposer_token.mint == citizen_mint.key() @ DaoError::NotYourNFT,
+        constraint = proposer_token.owner == proposer.key() @ DaoError::NotYourNFT,
+        constraint = proposer_token.amount == 1 @ DaoError::NotYourNFT,
     )]
-    pub proof: Account<'info, Proof>,
+    pub proposer_token: Account<'info, TokenAccount>,
+
+    /// CHECK: the CitizenMarker PDA — proven genuine by seeds + owner. Never
+    /// deserialized.
+    #[account(
+        seeds = [CITIZEN_SEED, citizen_mint.key().as_ref()],
+        bump,
+        seeds::program = CITIZEN_PROGRAM,
+        owner = CITIZEN_PROGRAM @ DaoError::NotACitizen,
+    )]
+    pub marker: UncheckedAccount<'info>,
 
     #[account(
         init,
@@ -40,7 +54,6 @@ pub fn handler(
     spend_amount: u64,
 ) -> Result<()> {
     require!(title.len() <= MAX_TITLE_LEN, DaoError::TitleTooLong);
-    require!(ctx.accounts.proof.count >= MIN_PROOFS_TO_JOIN, DaoError::InsufficientLabour);
 
     let clock = Clock::get()?;
     let dao = &mut ctx.accounts.dao;

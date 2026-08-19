@@ -1,71 +1,64 @@
 # 0state — Governing Framework
 
 **Status: DRAFT for review by counsel. Not legal advice.** This binds the
-**0state** on-chain program to a legal entity, so a fully autonomous, trustless
-DAO can hold real-world assets, sign contracts, and give its members limited
-liability — **without** a board, managers, or shareholders.
+**0state** on-chain program to a legal entity, so a token-governed collective can
+hold real-world assets, sign contracts, and give its members limited liability.
 
-0state is, in one line, **CityDAO built communist.** CityDAO's genuine
-innovation was legal: a Wyoming DAO wrapper that let a token-governed collective
-hold real-world property. 0state keeps that wrapper and inverts its economics.
-Where CityDAO issued tradeable Citizen NFTs and parcelled land to private
-holders, 0state makes membership **un-buyable** and holds everything **in
-common**. There are no parcels. There is no private stake in the commons. The
-franchise is earned by labour — by *mining* — and can never be sold.
+0state is **CityDAO, on Solana.** Citizenship is a **Citizen NFT**: mint one,
+hold it, and holding it is your membership and your vote — **one NFT, one vote.**
+The NFT is freely transferable, so citizenship can be bought, sold, and traded on
+any marketplace, exactly as CityDAO's Citizen NFTs were. Mint proceeds fund the
+commons treasury.
 
-**Structure: a UNA now → a DUNA at scale.** Form immediately as an
-**Unincorporated Nonprofit Association (UNA)** — fast, no filing, no member
-minimum, already able to hold property and shield members from liability.
-Convert to a **Wyoming DUNA** once 0state reaches its 100-member floor and
-deploys to mainnet. The **same on-chain program governs throughout**; the
-wrapper is a legal skin.
+**Structure: a UNA now → a DUNA / Wyoming DAO LLC at scale.** Form as an
+Unincorporated Nonprofit Association today; convert to a Wyoming DAO LLC (as
+CityDAO did) once the membership and assets justify it. The **same on-chain
+program governs throughout**; the wrapper is a legal skin.
 
 ---
 
 ## 1. Two layers
 | Layer | What it is | Who controls it |
 |---|---|---|
-| **The code** | the 0state program — proposals, weighted votes, the commons treasury | the miners, autonomously and trustlessly |
-| **The wrapper** | a legal body (UNA → DUNA) that can hold assets & contract | commanded *only* by the code |
+| **The code** | the citizen + zerostate programs — Citizen NFTs, proposals, weighted votes | the Citizen NFT holders |
+| **The wrapper** | a legal body (UNA → DAO LLC) that can hold assets & contract | commanded *only* by the code |
 
-The code is the government; the legal entity is the body it commands. Nothing in
-the wrapper may override a passed on-chain vote. There is **no Doge here** — 0state
-is fully autonomous. (The Doge governs frankcoin, a separate memecoin. 0state
-answers only to its miners.)
+Nothing in the wrapper may override a passed on-chain vote.
 
-## 2. The franchise is mined, never bought: STATE
-- Membership is held by mining **STATE**, 0state's own proof-of-work token
-  (program `2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE`). Any wallet holding a
-  `Proof` account — i.e. that has mined — is a member. **No application, no
-  admission, no fee, no join step.**
-- Membership is **non-transferable** — earned by proof-of-work, never bought,
-  sold, or gifted, and provable on-chain. Money and the vote are held separately:
-  you may trade STATE the token, but trading it conveys none of the franchise,
-  because the vote reads the *record of your labour*, not your balance.
-- The member set is enumerable off-chain by counting `Proof` accounts.
+## 2. Citizenship is a transferable NFT
 
-## 3. Everything is held in common
-- **The commons treasury:** one STATE in every ten mined is routed, automatically
-  and direct from mining, to a program-controlled account with **no private
-  key**. It is the collective fund — the material base of the commune.
-- Funds leave **only** by executing a passed 0state spending proposal. No member,
-  and no officer of the legal wrapper, may spend or privatise the commons by any
-  other means.
-- Real-world assets the DUNA acquires — land, equipment, accounts — are held by
-  the wrapper **on behalf of the whole membership, undivided.** No parcels, no
-  shares, no individual title. From each according to their mining; to the
-  commune according to its vote.
+- **Mint to join.** Anyone may mint a Citizen NFT (`citizen` program
+  `FVB77ftzfggbdk5tHHB6fE4AzHQrHMjmzXjn8UujypfM`). It is a true 1-of-1 SPL NFT
+  with Metaplex metadata, and each carries a `CitizenMarker` PDA that proves it
+  genuine. The first tranche are **Founding Citizens**.
+- **Hold it to vote.** Governance reads *current ownership* of a Citizen NFT.
+  Whoever holds the NFT at vote time is the citizen — so citizenship travels with
+  the token when it is traded.
+- **One NFT, one vote.** No weighting by wealth or by anything else; each Citizen
+  NFT is exactly one vote, and a holder of several NFTs casts several votes.
+
+## 3. Assets & treasury
+
+- **Commons treasury:** the commune's spendable fund is held in STATE (the
+  0state currency), topped up by the mining levy, and released only by executing
+  a passed spending proposal. Citizen-NFT holders vote; anyone may then enact it.
+- **Mint proceeds:** Citizen NFT sales (0 on devnet) accrue to a program-owned
+  treasury for the commune.
+- Real-world assets the DAO LLC acquires are held by the wrapper as the
+  membership's mandate, documented by these on-chain votes.
 
 ## 4. Governance is the on-chain program (binding)
-- Authoritative program: `BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9` (devnet
-  today; a mainnet address at launch).
-- A **proposal that passes** on-chain (voting closed, weighted yes > no) is a
-  **binding act of the Association**. No officer or agent may act contrary to it.
-- **Voting:** one member, one vote, weighted `1 + √(active mined STATE)` —
-  sub-linear so no miner dominates, decaying with inactivity so influence tracks
-  current contribution. First-past-the-post at close.
+
+- Voting program: `BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9`.
+- A **proposal that passes** on-chain (voting closed, yes > no) is a binding act
+  of the Association. A ballot is keyed to the *NFT*, so each Citizen NFT votes at
+  most once per proposal.
+- **STATE** remains the commune's currency (mine it with `statemine`); it is no
+  longer the franchise. Money and the vote are now the *same* transferable asset
+  only in the sense that the vote — the Citizen NFT — is itself a tradeable good.
 
 ## 5. Status
 
-Devnet. Membership, the commons, and every vote are on the public ledger. Repos:
+Devnet. Citizen NFTs and the ledger are a test network's and are worth nothing.
+Nothing here is an offer, a sale, a security, or financial advice. Repos:
 github.com/maxtindall/0state.

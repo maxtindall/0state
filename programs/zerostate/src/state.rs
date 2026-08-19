@@ -1,24 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::constants::MAX_TITLE_LEN;
 
-/// A **read-only mirror** of STATE's `Proof` account, vendored so 0state
-/// builds with no dependency on the STATE crate. The struct name and field
-/// layout are identical to STATE's, so Anchor derives the same 8-byte
-/// discriminator and deserializes the real account byte-for-byte. 0state only
-/// ever *reads* it — and always under `seeds::program = STATE_PROGRAM`, so
-/// the account is proven to be genuinely owned by STATE. A citizen cannot
-/// forge a Proof: this program never creates or writes one.
-#[account]
-#[derive(InitSpace)]
-pub struct Proof {
-    pub miner: Pubkey,
-    pub challenge: [u8; 32],
-    pub last_claim_ts: i64,
-    pub total_mined: u64,
-    pub count: u64,
-    pub bump: u8,
-}
-
 /// The organization's record. One per deployment. Holds only the rules of the
 /// vote — no treasury, no admin power, no way to mint a vote.
 #[account]
@@ -29,14 +11,19 @@ pub struct Dao {
     pub founder: Pubkey,
     pub genesis_ts: i64,
     pub voting_period: i64,
-    pub member_count: u64,
+    pub member_count: u64, // reserved; the live count is the citizen program's citizen_count
     pub proposal_count: u64,
     /// Forward space so the singleton can grow without a migration.
     pub reserved: [u8; 64],
 }
 
 /// A question put to the membership. Full text lives off-chain; the chain keeps
-/// a title and the hash that pins it. Tallies are weighted sums.
+/// a title and the hash that pins it. Tallies are counts of Citizen NFTs.
+///
+/// NOTE: the field layout is unchanged from the mined-franchise era so the
+/// `state` program's `treasury_withdraw` (which decodes this account by hand and
+/// checks the discriminator) keeps working: a passed spending proposal still
+/// authorizes moving STATE from the commons treasury to a recipient.
 #[account]
 #[derive(InitSpace)]
 pub struct Proposal {
@@ -51,26 +38,28 @@ pub struct Proposal {
     pub yes: u64,
     pub no: u64,
     pub abstain: u64,
-    /// Members enrolled at the moment this opened — a stable denominator for
-    /// turnout, independent of who joins later.
+    /// Citizen count at the moment this opened — a stable turnout denominator.
     pub electorate_at_open: u64,
     /// If this is a spending proposal, the recipient of the treasury STATE and
-    /// the amount (base units). A default (zero) recipient with amount 0 marks
-    /// an ordinary proposal that moves no funds. When such a proposal passes,
-    /// anyone may execute the STATE `treasury_withdraw` it authorizes.
+    /// the amount (base units). A default (zero) recipient with amount 0 marks an
+    /// ordinary proposal that moves no funds. When such a proposal passes, anyone
+    /// may execute the STATE `treasury_withdraw` it authorizes.
     pub spend_recipient: Pubkey,
     pub spend_amount: u64,
 }
 
-/// One ballot per member per proposal. Its existence prevents a second vote, and
-/// it records the weight that was applied for a full audit trail.
+/// One ballot per **Citizen NFT** per proposal. Its existence prevents the same
+/// NFT from voting twice; it records which NFT voted and how, for a full audit
+/// trail. Because the NFT is transferable, the ballot is keyed by the mint, not
+/// the wallet — a whale holding several NFTs casts one vote per NFT.
 #[account]
 #[derive(InitSpace)]
 pub struct Ballot {
     pub bump: u8,
     pub proposal: Pubkey,
-    pub member: Pubkey,
-    pub choice: u8, // 0 = no, 1 = yes, 2 = abstain
-    pub weight: u64,
+    pub citizen_mint: Pubkey,
+    pub voter: Pubkey, // who held the NFT when it voted (record only)
+    pub choice: u8,    // 0 = no, 1 = yes, 2 = abstain
+    pub weight: u64,   // always 1 — one NFT, one vote
     pub cast_ts: i64,
 }

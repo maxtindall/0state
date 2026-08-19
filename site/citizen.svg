@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <rect width="500" height="500" fill="#050805"/>
+  <rect x="18" y="18" width="464" height="464" fill="none" stroke="#199c3f" stroke-width="1.5" opacity="0.5"/>
+  <rect x="28" y="28" width="444" height="444" fill="none" stroke="#35ff6a" stroke-width="1.5" opacity="0.25"/>
+  <g font-family="'Courier New',monospace" fill="#35ff6a">
+    <text x="46" y="70" font-size="15" letter-spacing="4" fill="#199c3f">&gt; 0STATE.WEBSITE</text>
+    <text x="46" y="230" font-size="52" font-weight="bold" letter-spacing="2" style="filter:drop-shadow(0 0 12px rgba(53,255,106,.5))">CITIZEN</text>
+    <text x="46" y="272" font-size="17" fill="#2ad257" letter-spacing="1">of the 0state commune</text>
+    <text x="46" y="360" font-size="14" fill="#199c3f" letter-spacing="1">HOLD THIS · IT IS YOUR VOTE</text>
+    <text x="46" y="384" font-size="14" fill="#199c3f" letter-spacing="1">TRANSFERABLE · ONE NFT, ONE VOTE</text>
+    <text x="46" y="452" font-size="12" fill="#0d5222" letter-spacing="2">CITYDAO · BUILT · DEVNET</text>
+  </g>
+  <circle cx="410" cy="410" r="34" fill="none" stroke="#35ff6a" stroke-width="2" opacity="0.7"/>
+  <path d="M396 402 h20 M396 410 h16 M396 402 v20" stroke="#35ff6a" stroke-width="2" fill="none" opacity="0.7"/>
+</svg>

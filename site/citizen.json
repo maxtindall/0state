@@ -1,0 +1,16 @@
+{
+  "name": "0state Citizen",
+  "symbol": "0CIT",
+  "description": "Citizenship in 0state — a CityDAO-style commune on Solana. Holding this NFT is your membership and your vote (one NFT, one vote). Freely transferable. Devnet — worth nothing; not an offer, sale, or security.",
+  "image": "https://0state.website/citizen.svg",
+  "external_url": "https://0state.website",
+  "attributes": [
+    { "trait_type": "Class", "value": "Citizen" },
+    { "trait_type": "Commune", "value": "0state" },
+    { "trait_type": "Network", "value": "Solana devnet" }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [{ "uri": "https://0state.website/citizen.svg", "type": "image/svg+xml" }]
+  }
+}

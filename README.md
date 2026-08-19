@@ -1,106 +1,75 @@
 # 0state
 
-CityDAO, built communist — a closed economic commune run as an artwork, *a
-computer with assets*. Its franchise is **STATE**, a token you can only get by
-mining; its members are its miners; its assets are held in common; its decisions
-are made by weighted vote of labour, never of wealth.
+**CityDAO, on Solana.** A commune run as an artwork — *a computer with assets*.
+Citizenship is a **Citizen NFT**: mint one, hold it, and holding it is your
+membership and your vote. It is freely transferable — trade it and the vote goes
+with it. **STATE** is the commune's currency (mine it); it is no longer the
+franchise.
 
-    state       2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE   (devnet · the STATE token)
-    zerostate   BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9   (devnet · the vote)
-    site        https://0state.website
-    memos       https://0state.website/memos
+    citizen     FVB77ftzfggbdk5tHHB6fE4AzHQrHMjmzXjn8UujypfM   (the Citizen NFT)
+    zerostate   BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9   (the vote)
+    state       2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE   (STATE, the currency)
+    site        https://0state.website     ·     memos    https://0state.website/memos
 
 ## The idea
 
-An economic entity as art. 0state holds assets and governs them collectively —
-but not by wealth. Governance is **communist in the literal sense**: power comes
-from labour, never from holdings.
+An economic entity as art, governed by its citizens. Citizenship is a token you
+hold, exactly as CityDAO issued Citizen NFTs — **one NFT, one vote**, tradeable
+on any marketplace, so membership itself is a market good.
 
-- **The franchise is mined, never bought.** To be a citizen you must have mined
-  STATE. The vote reads your on-chain *Proof of work*, not your token balance, so
-  holding STATE you were given counts for nothing — only STATE you mined. You may
-  trade the token freely; trading it conveys none of the franchise.
-- **Membership is automatic.** Having mined a single STATE proof makes you a
-  citizen — no application, no admitting authority, no join step. The member set
-  is just the set of miners, enumerable on-chain.
-- **Everything is held in common.** One STATE in every ten mined is routed to a
-  keyless commons treasury; it leaves only by a passed vote. Real-world assets a
-  0state legal wrapper acquires are held undivided — no parcels, no private stake.
+- **Mint to join.** Anyone may mint a Citizen NFT. Each is a true 1-of-1 (supply
+  locked at mint) with Metaplex metadata; the first tranche are **Founding
+  Citizens**.
+- **Hold it to vote.** Governance reads *current ownership*. Whoever holds the
+  NFT at vote time is the citizen — citizenship travels with the token.
+- **One NFT, one vote.** No weighting; a holder of several NFTs casts several
+  votes.
 
-## The two programs
+## The programs
 
-0state is two small Anchor programs. **frankcoin** (the memecoin) is unrelated
-and lives in [its own repo](https://github.com/maxtindall/frankcoin).
+- **`citizen`** — mints transferable Citizen NFTs (supply-1 SPL + Metaplex
+  metadata + a `CitizenMarker` PDA so the vote can verify authenticity cheaply).
+  Mint proceeds fund the treasury.
+- **`zerostate`** — the vote. `propose` / `vote` verify the caller holds a
+  genuine Citizen NFT; a ballot is keyed to the NFT (so each NFT votes once).
+- **`state`** — STATE, the commune's currency: proof-of-work mined, uncapped,
+  with a commons treasury (10% levy) spent only by a passed vote.
 
-### `state` — the mined franchise (and the commons)
-
-A proof-of-work token. Minted from zero, no admin inflation, fully autonomous —
-no steward, no owner, no privileged key. Uncapped: the reward halves across a
-distribution phase, then floors at a perpetual 1-per-proof tail. Ten percent of
-every reward is minted to the commons treasury, spendable only by a passed
-0state vote.
-
-| instruction | who | what |
-|---|---|---|
-| `initialize` | founder | Create the mint + config. Once. |
-| `register` / `mine` | any wallet | Mine STATE. One accepted proof makes you a citizen. |
-| `treasury_withdraw` | anyone | Enact a *passed* 0state spending proposal. Single-use. |
-
-### `zerostate` — the vote
-
-The voting layer only — it holds no funds and cannot move a lamport. Membership
-and weight are read live from a citizen's STATE `Proof`.
-
-| instruction | who | what |
-|---|---|---|
-| `initialize` | founder | Found the commune. Once. |
-| `propose` | any citizen | Put a question. Body off-chain, pinned by hash. Spending proposals name a recipient + amount. |
-| `vote` | any citizen | One weighted vote — 0 no, 1 yes, 2 abstain. |
-
-Two structural guarantees, made impossible to violate:
-
-- **The mining gate cannot be forged.** Voting weight is read through a `Proof`
-  account proven to be owned by the `state` program — never a token balance.
-- **No one votes twice.** A ballot is a PDA seeded by `(proposal, citizen)`; a
-  second vote fails at account creation.
-
-**Voting weight** is `1 + √(active mined STATE)` — sub-linear, so no miner
-dominates, and decaying with inactivity, so influence tracks recent labour.
-First-past-the-post at close.
+frankcoin (the memecoin) is unrelated and lives in
+[its own repo](https://github.com/maxtindall/frankcoin).
 
 ## Layout
 
-    programs/state/       the STATE proof-of-work token + commons treasury
-    programs/zerostate/   the voting layer (reads STATE proofs)
-    cli/                  the `0state` terminal and the `statemine` miner
-    site/                 0state.website (+ /memos)
-    Anchor.toml           workspace: state + zerostate, devnet
+    programs/citizen/     the Citizen NFT program
+    programs/zerostate/   the vote (reads Citizen NFT ownership)
+    programs/state/       STATE, the mined currency + commons treasury
+    cli/                  `0state` terminal + `statemine` currency miner
+    site/                 0state.website (+ /memos, citizen NFT metadata)
+    Anchor.toml           workspace: citizen + zerostate + state, devnet
 
-This repo is a **buildable mirror of the deployed devnet programs.** Reproduce it:
+A **buildable mirror** of the deployed devnet programs:
 
     anchor build --ignore-keys
-
-The resulting `state.so` / `zerostate.so` and IDL addresses match what is on
-devnet. (Use `--ignore-keys`; the program IDs are fixed in source.)
 
 ## Take part
 
     brew tap maxtindall/frankcoin && brew trust maxtindall/frankcoin
     brew install maxtindall/frankcoin/0state    # installs `0state` + `statemine`
-    statemine                                   # mine STATE → become a citizen
-    0state status                               # the commune, and your standing
-    0state propose "<title>" --body "…"
-    0state vote <id> yes|no|abstain
-    brew upgrade maxtindall/frankcoin/0state     # pull updates
+    0state mint                                 # mint your Citizen NFT
+    0state status                               # the commune, and your citizenship
+    0state propose "<title>"
+    0state vote <id> yes|no|abstain             # votes with your Citizen NFT
+    statemine                                   # (optional) mine the STATE currency
+    brew upgrade maxtindall/frankcoin/0state
 
 Signing happens locally with your own Solana keypair; nothing is custodied.
 
 ## What this is not
 
-0state is an artwork about how a small economy might govern itself. It runs on
-Solana's **devnet**; its STATE tokens and its ledger are a test network's and are
+An artwork about how a small economy might govern itself. It runs on Solana's
+**devnet**; its Citizen NFTs, STATE, and ledger are a test network's and are
 worth nothing. Nothing here is an offer, a sale, a security, or financial advice.
 
-MIT licensed. See [GOVERNANCE.md](GOVERNANCE.md) for the legal framing (UNA → DUNA).
+MIT licensed. See [GOVERNANCE.md](GOVERNANCE.md).
 
 *A Max Tindall Inc project.*

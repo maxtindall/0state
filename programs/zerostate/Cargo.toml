@@ -14,14 +14,15 @@ cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
-idl-build = ["anchor-lang/idl-build"]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-# 0state is fully self-contained: it reads frankcoin's Proof account with a
-# vendored, layout-identical `Proof` type (see state.rs), always guarded by
-# `seeds::program = FRANKCOIN_PROGRAM` so the account is proven to be genuinely
-# owned by frankcoin. No build-time dependency on the frankcoin crate.
+# 0state governs by Citizen NFT ownership. It reads the citizen program's
+# CitizenMarker PDA (guarded by seeds::program + owner) to prove an NFT is a
+# genuine Citizen, and an SPL token account to prove the voter holds it. No
+# build-time dependency on the citizen crate.
 anchor-lang = "1.0.2"
+anchor-spl = "1.0.2"
 
 [dev-dependencies]
 litesvm = "0.10.0"

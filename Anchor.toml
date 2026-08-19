@@ -5,13 +5,16 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
-# The two programs 0state owns, mirrored from the deployed devnet build. frankcoin
-# (the memecoin) lives in its own repo; 0state governs STATE only.
+# The three programs 0state owns, mirrored from the deployed devnet build.
+# Citizenship is a transferable Citizen NFT (citizen); zerostate is the vote;
+# state is the STATE currency. frankcoin (the memecoin) lives in its own repo.
 [programs.localnet]
+citizen = "FVB77ftzfggbdk5tHHB6fE4AzHQrHMjmzXjn8UujypfM"
 state = "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE"
 zerostate = "BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9"
 
 [programs.devnet]
+citizen = "FVB77ftzfggbdk5tHHB6fE4AzHQrHMjmzXjn8UujypfM"
 state = "2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE"
 zerostate = "BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9"
 

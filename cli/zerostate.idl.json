@@ -107,62 +107,76 @@
           }
         },
         {
-          "name": "proof",
+          "name": "citizen_mint",
           "docs": [
-            "The proposer's STATE Proof — proof of membership (having mined)."
+            "The proposer's Citizen NFT mint."
+          ]
+        },
+        {
+          "name": "proposer_token",
+          "docs": [
+            "The proposer's token account, proving they hold the NFT."
+          ]
+        },
+        {
+          "name": "marker",
+          "docs": [
+            "deserialized."
           ],
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  112,
-                  114,
-                  111,
-                  111,
-                  102
+                  99,
+                  105,
+                  116,
+                  105,
+                  122,
+                  101,
+                  110
                 ]
               },
               {
                 "kind": "account",
-                "path": "proposer"
+                "path": "citizen_mint"
               }
             ],
             "program": {
               "kind": "const",
               "value": [
-                29,
-                47,
+                215,
+                59,
+                78,
                 77,
-                255,
-                15,
-                178,
-                175,
-                126,
-                87,
-                126,
-                254,
+                136,
                 46,
-                244,
-                23,
-                65,
-                184,
-                40,
-                42,
-                216,
-                37,
-                21,
+                133,
+                198,
+                44,
+                11,
+                143,
+                45,
+                111,
+                94,
+                197,
+                201,
+                127,
+                152,
                 4,
-                207,
-                224,
-                95,
-                160,
-                233,
-                18,
-                238,
-                134,
-                177,
-                177
+                75,
+                156,
+                114,
+                131,
+                229,
+                109,
+                176,
+                104,
+                239,
+                184,
+                157,
+                151,
+                108
               ]
             }
           }
@@ -245,63 +259,77 @@
           "signer": true
         },
         {
-          "name": "proof",
+          "name": "citizen_mint",
           "docs": [
-            "The voter's STATE Proof — their membership card and their weight.",
-            "Genuinely owned by STATE and tied to the voter by seed."
+            "The Citizen NFT's mint."
+          ]
+        },
+        {
+          "name": "voter_token",
+          "docs": [
+            "The voter's token account proving they hold the NFT right now."
+          ]
+        },
+        {
+          "name": "marker",
+          "docs": [
+            "the citizen program) AND the owner check (actually owned by it, i.e. it",
+            "exists because the citizen program minted this NFT). Never deserialized."
           ],
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  112,
-                  114,
-                  111,
-                  111,
-                  102
+                  99,
+                  105,
+                  116,
+                  105,
+                  122,
+                  101,
+                  110
                 ]
               },
               {
                 "kind": "account",
-                "path": "voter"
+                "path": "citizen_mint"
               }
             ],
             "program": {
               "kind": "const",
               "value": [
-                29,
-                47,
+                215,
+                59,
+                78,
                 77,
-                255,
-                15,
-                178,
-                175,
-                126,
-                87,
-                126,
-                254,
+                136,
                 46,
-                244,
-                23,
-                65,
-                184,
-                40,
-                42,
-                216,
-                37,
-                21,
+                133,
+                198,
+                44,
+                11,
+                143,
+                45,
+                111,
+                94,
+                197,
+                201,
+                127,
+                152,
                 4,
-                207,
-                224,
-                95,
-                160,
-                233,
-                18,
-                238,
-                134,
-                177,
-                177
+                75,
+                156,
+                114,
+                131,
+                229,
+                109,
+                176,
+                104,
+                239,
+                184,
+                157,
+                151,
+                108
               ]
             }
           }
@@ -354,7 +382,7 @@
               },
               {
                 "kind": "account",
-                "path": "voter"
+                "path": "citizen_mint"
               }
             ]
           }
@@ -400,19 +428,6 @@
       ]
     },
     {
-      "name": "Proof",
-      "discriminator": [
-        163,
-        35,
-        13,
-        71,
-        15,
-        128,
-        63,
-        82
-      ]
-    },
-    {
       "name": "Proposal",
       "discriminator": [
         26,
@@ -429,31 +444,26 @@
   "errors": [
     {
       "code": 6000,
-      "name": "NotAStateProof",
-      "msg": "that Proof account is not owned by the STATE program"
+      "name": "NotACitizen",
+      "msg": "that mint is not a genuine 0state Citizen NFT"
     },
     {
       "code": 6001,
-      "name": "InsufficientLabour",
-      "msg": "this wallet has not mined enough to join"
+      "name": "NotYourNFT",
+      "msg": "you do not hold this Citizen NFT"
     },
     {
       "code": 6002,
-      "name": "ProofOwnerMismatch",
-      "msg": "the proof account does not belong to this wallet"
-    },
-    {
-      "code": 6003,
       "name": "TitleTooLong",
       "msg": "proposal title is too long"
     },
     {
-      "code": 6004,
+      "code": 6003,
       "name": "VotingClosed",
       "msg": "voting on this proposal has closed"
     },
     {
-      "code": 6005,
+      "code": 6004,
       "name": "BadChoice",
       "msg": "invalid vote choice"
     }
@@ -462,8 +472,10 @@
     {
       "name": "Ballot",
       "docs": [
-        "One ballot per member per proposal. Its existence prevents a second vote, and",
-        "it records the weight that was applied for a full audit trail."
+        "One ballot per **Citizen NFT** per proposal. Its existence prevents the same",
+        "NFT from voting twice; it records which NFT voted and how, for a full audit",
+        "trail. Because the NFT is transferable, the ballot is keyed by the mint, not",
+        "the wallet — a whale holding several NFTs casts one vote per NFT."
       ],
       "type": {
         "kind": "struct",
@@ -477,7 +489,11 @@
             "type": "pubkey"
           },
           {
-            "name": "member",
+            "name": "citizen_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "voter",
             "type": "pubkey"
           },
           {
@@ -547,56 +563,15 @@
       }
     },
     {
-      "name": "Proof",
-      "docs": [
-        "A **read-only mirror** of STATE's `Proof` account, vendored so 0state",
-        "builds with no dependency on the STATE crate. The struct name and field",
-        "layout are identical to STATE's, so Anchor derives the same 8-byte",
-        "discriminator and deserializes the real account byte-for-byte. 0state only",
-        "ever *reads* it — and always under `seeds::program = STATE_PROGRAM`, so",
-        "the account is proven to be genuinely owned by STATE. A citizen cannot",
-        "forge a Proof: this program never creates or writes one."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "miner",
-            "type": "pubkey"
-          },
-          {
-            "name": "challenge",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "last_claim_ts",
-            "type": "i64"
-          },
-          {
-            "name": "total_mined",
-            "type": "u64"
-          },
-          {
-            "name": "count",
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "Proposal",
       "docs": [
         "A question put to the membership. Full text lives off-chain; the chain keeps",
-        "a title and the hash that pins it. Tallies are weighted sums."
+        "a title and the hash that pins it. Tallies are counts of Citizen NFTs.",
+        "",
+        "NOTE: the field layout is unchanged from the mined-franchise era so the",
+        "`state` program's `treasury_withdraw` (which decodes this account by hand and",
+        "checks the discriminator) keeps working: a passed spending proposal still",
+        "authorizes moving STATE from the commons treasury to a recipient."
       ],
       "type": {
         "kind": "struct",
@@ -649,8 +624,7 @@
           {
             "name": "electorate_at_open",
             "docs": [
-              "Members enrolled at the moment this opened — a stable denominator for",
-              "turnout, independent of who joins later."
+              "Citizen count at the moment this opened — a stable turnout denominator."
             ],
             "type": "u64"
           },
@@ -658,9 +632,9 @@
             "name": "spend_recipient",
             "docs": [
               "If this is a spending proposal, the recipient of the treasury STATE and",
-              "the amount (base units). A default (zero) recipient with amount 0 marks",
-              "an ordinary proposal that moves no funds. When such a proposal passes,",
-              "anyone may execute the STATE `treasury_withdraw` it authorizes."
+              "the amount (base units). A default (zero) recipient with amount 0 marks an",
+              "ordinary proposal that moves no funds. When such a proposal passes, anyone",
+              "may execute the STATE `treasury_withdraw` it authorizes."
             ],
             "type": "pubkey"
           },

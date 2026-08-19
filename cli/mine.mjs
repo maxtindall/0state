@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// STATE miner — the reference miner for 0state's franchise token.
+// STATE miner — mine the commune's currency.
 //
-// Grinds keccak proofs against the `state` program and submits them to mint
-// STATE to your wallet. Mining STATE is the ONLY qualification for 0state
-// membership: no application, no join step. One STATE in every ten you mine is
-// routed automatically to the commons treasury — the collective fund, spent only
-// by a passed 0state vote — so the miner passes the treasury accounts too.
+// Grinds keccak proofs against the `state` program and mints STATE to your
+// wallet. STATE is 0state's currency; it is NO LONGER the franchise —
+// citizenship is a transferable Citizen NFT (`0state mint`). One STATE in every
+// ten you mine is routed to the commons treasury, spent only by a passed vote,
+// so the miner passes the treasury accounts too.
 //
 // Permissionless: this is one miner; anyone can write another. Signs with YOUR
 // keypair — no server, no custody.
@@ -67,7 +67,7 @@ function grind(challenge, difficulty) {
 }
 
 async function main() {
-  console.log('STATE miner — 0state franchise');
+  console.log('STATE miner — the commune currency (citizenship is a Citizen NFT: 0state mint)');
   console.log('  rpc     ', rpc);
   console.log('  wallet  ', me.toBase58());
   console.log('  program ', PROGRAM_ID.toBase58());
@@ -93,7 +93,7 @@ async function main() {
     await program.methods.register().accounts({
       miner: me, config, proof, systemProgram: SystemProgram.programId,
     }).rpc();
-    console.log('  registered — you are now a citizen of 0state.');
+    console.log('  registered to mine STATE (the currency). Citizenship is a Citizen NFT: `0state mint`.');
   } catch (e) { console.log('  already registered (or:', String(e.message).slice(0, 60), ')'); }
 
   const cfg = await program.account.config.fetch(config);

@@ -1,7 +1,7 @@
 {
   "name": "0state-cli",
-  "version": "2.0.0",
-  "description": "Command-line client for 0state — a communist DAO governed by the miners of STATE.",
+  "version": "3.0.0",
+  "description": "Command-line client for 0state — a CityDAO-style commune; citizenship is a transferable Citizen NFT.",
   "type": "module",
   "bin": { "0state": "./0state.mjs", "statemine": "./mine.mjs" },
   "dependencies": {
