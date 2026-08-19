@@ -1,8 +1,8 @@
 class Zerostate < Formula
   desc "Terminal and STATE miner for 0state — a communist DAO of the miners of STATE"
   homepage "https://0state.website"
-  url "https://github.com/maxtindall/0state/archive/refs/tags/cli-v2.0.0.tar.gz"
-  sha256 "8f3b0b2d469fb84a0640cc20b29e97fc48e25e79f3a34e0612bd5199bd3b0235"
+  url "https://github.com/maxtindall/0state/archive/refs/tags/cli-v3.0.0.tar.gz"
+  sha256 "3c552f1e2fde6b142976e0e61fdae6f7773e15bcab7cf482fc376d6fc00c85d2"
   license "MIT"
 
   depends_on "node"
