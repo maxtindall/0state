@@ -4,44 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>0state</title>
-<meta name="description" content="0state — CityDAO on Solana. Citizenship is a transferable Citizen NFT: mint one, hold it, and holding it is your vote. One NFT, one vote. Trade it and the vote goes with it.">
+<meta name="description" content="0state — CityDAO on Solana. Citizenship is a transferable Citizen NFT: mint one, hold it, and holding it is your vote. One NFT, one vote; trade it and the vote goes with it.">
 <style>
   :root{
-    --black:#000;
-    --green:#35ff6a;
-    --green-2:#2ad257;
-    --dim:#199c3f;
-    --faint:#0d5222;
-    --red:#ff4444;
+    --black:#000; --green:#35ff6a; --green-2:#2ad257; --dim:#199c3f;
+    --faint:#0d5222; --bright:#c6ffd8; --red:#ff4444;
   }
   *{box-sizing:border-box;margin:0;padding:0;
     font-family:"Courier New",ui-monospace,SFMono-Regular,Menlo,monospace}
   html{-webkit-text-size-adjust:100%}
-  body{background:var(--black);color:var(--green);line-height:1.55;
+  body{background:var(--black);color:var(--green);line-height:1.7;
        padding:0 18px 90px;overflow-x:hidden}
-
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
-    background:repeating-linear-gradient(180deg,
-      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
-      rgba(0,0,0,.20) 3px, rgba(0,0,0,.20) 4px)}
+    background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,0,.20) 3px,rgba(0,0,0,.20) 4px)}
   body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:8;
-    background:radial-gradient(ellipse at center,
-      rgba(0,0,0,0) 52%, rgba(0,0,0,.55) 100%)}
-
-  .page{width:100%;max-width:760px;margin:0 auto;padding-top:15vh;
-        position:relative;z-index:1}
-
-  .brand{font-size:clamp(34px,11vw,54px);font-weight:bold;letter-spacing:1px;
-    color:var(--green);text-shadow:0 0 12px rgba(53,255,106,.45);
-    margin-bottom:6px;min-height:1.1em}
-  .tag{color:var(--green-2);font-size:13px;letter-spacing:1px;min-height:20px}
-
-  .cursor{display:inline-block;width:8px;height:1em;background:var(--green);
-    vertical-align:-2px;margin-left:2px;animation:blink .9s steps(1) infinite}
-  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-
-  /* icon links — shown at once, not typed */
-  .links{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px}
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(0,0,0,.55) 100%)}
+  .page{width:100%;max-width:680px;margin:0 auto;padding-top:16vh;position:relative;z-index:1}
+  .brand{font-size:clamp(32px,11vw,50px);font-weight:bold;letter-spacing:1px;
+    color:var(--green);text-shadow:0 0 12px rgba(53,255,106,.45)}
+  .tag{color:var(--green-2);font-size:13px;letter-spacing:1px;margin-top:6px}
+  .links{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px}
   .links a{display:inline-flex;align-items:center;gap:7px;color:var(--green-2);
     text-decoration:none;font-size:12px;letter-spacing:.5px;
     border:1px solid rgba(53,255,106,.28);border-radius:3px;padding:6px 11px;
@@ -49,323 +31,42 @@
   .links a:hover,.links a:focus-visible{color:var(--green);border-color:var(--green);
     box-shadow:0 0 12px rgba(53,255,106,.25);outline:none}
   .links svg{width:15px;height:15px;display:block}
-
-  section{margin-top:60px}
-  .q{color:var(--dim);font-size:12px;letter-spacing:2px;text-transform:uppercase;
-     margin-bottom:14px;min-height:1em}
-  .q::before{content:"> ";color:var(--faint)}
-
-  p{font-size:14px;letter-spacing:.4px;margin-bottom:16px;max-width:62ch;
-    min-height:1em}
-  p:last-child{margin-bottom:0}
-  .aside{color:var(--dim);font-size:12.5px}
-
-  .report{border:1px solid rgba(53,255,106,.22);padding:16px 18px;
-    max-width:62ch;background:rgba(53,255,106,.02)}
-  .line{display:flex;gap:14px;padding:3px 0;align-items:baseline;
-    font-size:13px;letter-spacing:.5px}
-  .line dt{color:var(--dim);white-space:nowrap;min-width:16ch}
-  .line dd{color:var(--green);font-variant-numeric:tabular-nums;
-    text-shadow:0 0 8px rgba(53,255,106,.28)}
-  .line dd.small{font-size:11px;color:var(--green-2);word-break:break-all;
-    text-shadow:none}
-  .line dd a{color:inherit;text-decoration:none;
-    border-bottom:1px dotted rgba(53,255,106,.45)}
-  .line dd a:hover{color:#c6ffd8;border-bottom-style:solid}
-  @media(max-width:520px){.line{flex-direction:column;gap:0}.line dt{min-width:0}}
-
-  .proposals{max-width:62ch;display:flex;flex-direction:column;gap:12px}
-  .prop{border:1px solid rgba(53,255,106,.22);padding:12px 15px;
-    background:rgba(53,255,106,.02)}
-  .prop-head{display:flex;gap:10px;align-items:baseline;justify-content:space-between}
-  .prop-title{font-size:13.5px;letter-spacing:.4px;color:var(--green);
-    text-shadow:0 0 8px rgba(53,255,106,.25)}
-  .prop-id{color:var(--faint);font-size:11px;white-space:nowrap}
-  .prop-state{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
-    padding:1px 7px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
-  .prop-state.open{color:var(--green)}
-  .prop-state.closed{color:var(--dim)}
-  /* tally bar */
-  .tally{display:flex;height:6px;margin:11px 0 8px;background:rgba(53,255,106,.08);
-    overflow:hidden;border:1px solid rgba(53,255,106,.14)}
-  .tally i{display:block;height:100%}
-  .tally .y{background:var(--green)}
-  .tally .n{background:var(--red)}
-  .tally .a{background:var(--faint)}
-  .prop-nums{display:flex;gap:16px;font-size:11.5px;color:var(--dim);
-    font-variant-numeric:tabular-nums;flex-wrap:wrap}
-  .prop-nums b{color:var(--green-2);font-weight:normal}
-  .prop-close{color:var(--faint);font-size:11px;margin-top:6px}
-  .prop-turnout{color:var(--dim);font-size:11px;margin-top:4px}
-
-  .cli{border:1px solid rgba(53,255,106,.22);background:rgba(0,0,0,.35);
-    padding:14px 16px;max-width:62ch;overflow-x:auto;white-space:pre;
-    font-size:12.5px;line-height:1.85;letter-spacing:.3px;margin-bottom:16px}
-  .cli .c{color:var(--green)}
-  .cli .cm{color:var(--faint)}
-
-  /* wallet + actions */
-  button{font-family:inherit;background:transparent;color:var(--green);
-    border:1px solid rgba(53,255,106,.4);border-radius:3px;padding:7px 13px;
-    font-size:12px;letter-spacing:.6px;cursor:pointer;
-    transition:border-color .15s,box-shadow .15s,color .15s}
-  button:hover:not(:disabled){border-color:var(--green);box-shadow:0 0 12px rgba(53,255,106,.25)}
-  button:disabled{opacity:.5;cursor:default}
-  .wallet{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;max-width:62ch}
-  .who{color:var(--dim);font-size:11.5px;letter-spacing:.4px}
-  .flash{min-height:1.1em;font-size:11.5px;letter-spacing:.5px;color:var(--green-2);
-    margin-bottom:10px;max-width:62ch}
-  .flash.bad{color:var(--red)}
-  .prop-vote{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
-  .prop-vote button{padding:5px 11px;font-size:11px}
-  .propose{border:1px solid rgba(53,255,106,.22);padding:14px 16px;margin-top:16px;
-    max-width:62ch;background:rgba(53,255,106,.02);display:flex;flex-direction:column;gap:9px}
-  .q2{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase}
-  .propose input,.propose textarea{font-family:inherit;background:rgba(0,0,0,.4);
-    color:var(--green);border:1px solid rgba(53,255,106,.28);border-radius:3px;
-    padding:8px 10px;font-size:12.5px;letter-spacing:.4px;resize:vertical;width:100%}
-  .propose input:focus,.propose textarea:focus{outline:none;border-color:var(--green);
-    box-shadow:0 0 10px rgba(53,255,106,.2)}
-  .propose button{align-self:flex-start}
-
-  .door{border:1px solid rgba(255,68,68,.3);padding:14px 16px;max-width:62ch;
-    color:var(--green-2);font-size:13px;letter-spacing:.5px;
-    background:rgba(255,68,68,.03)}
-  .door b{color:var(--red);font-weight:normal}
-
+  p{font-size:14.5px;letter-spacing:.3px;margin-top:44px;max-width:64ch}
+  p b{color:var(--bright);font-weight:normal}
+  p a{color:var(--green);text-decoration:none;border-bottom:1px solid rgba(53,255,106,.35)}
+  p a:hover{color:var(--bright);border-bottom-color:var(--bright)}
+  p code{color:var(--green-2)}
   .disc{color:var(--red);font-size:11.5px;letter-spacing:.6px;line-height:1.65;
-    max-width:52ch;margin-top:60px;text-shadow:0 0 10px rgba(255,68,68,.35)}
-
-  footer{margin-top:52px;color:var(--faint);font-size:11px;letter-spacing:1px;
-    line-height:1.9;word-break:break-all}
-  footer a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(25,156,63,.4)}
-  footer a:hover{color:var(--green)}
-
-  @media (prefers-reduced-motion:reduce){.cursor{animation:none}body::before{display:none}}
+    max-width:56ch;margin-top:48px;text-shadow:0 0 10px rgba(255,68,68,.35)}
+  footer{margin-top:44px;color:var(--faint);font-size:11px;letter-spacing:1px}
+  @media (prefers-reduced-motion:reduce){body::before{display:none}}
 </style>
 </head>
 <body>
 <div class="page">
 
-  <h1 class="brand" data-type>0state D.A.O.</h1>
-  <div class="tag" data-type>CityDAO on Solana &mdash; citizenship is a transferable NFT.</div>
+  <h1 class="brand">0state D.A.O.</h1>
+  <div class="tag">CityDAO on Solana &mdash; citizenship is a transferable NFT.</div>
 
   <nav class="links" aria-label="0state links">
-    <a href="https://solscan.io/account/2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE?cluster=devnet" title="STATE — the mined franchise" aria-label="STATE token" target="_blank" rel="noopener">
+    <a href="https://solscan.io/account/2xvfGKpTHy5EA8RFJsKXu73nJVFPRH6YHxDAE5Rh6SVE?cluster=devnet" title="STATE — the mined currency" aria-label="STATE token" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8h5M9.5 12h4M9.5 8v8"/></svg>
       <span>STATE</span>
     </a>
     <a href="https://x.com/0state_DAO" title="0state D.A.O. on X" aria-label="0state D.A.O. on X" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
     </a>
-    <a href="./memos/" title="0state memos — dispatches from the Central Committee" aria-label="memos">
+    <a href="./memos/" title="0state memos" aria-label="memos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h11l5 5v13H4z"/><path d="M15 3v5h5M8 13h8M8 17h5"/></svg>
       <span>memos</span>
     </a>
   </nav>
 
-  <section>
-    <div class="q" data-type>introduction</div>
-    <p data-type>0state is CityDAO, on Solana. Citizenship is a Citizen NFT: mint one, hold it, and holding it is your membership and your vote — exactly as CityDAO issued Citizen NFTs. It is freely transferable, so citizenship can be bought, sold, and traded on any marketplace. The legal wrapper (UNA → Wyoming DAO LLC) lets the commune hold real-world assets as its citizens direct.</p>
-  </section>
+  <p>0state is <b>CityDAO, on Solana</b> &mdash; a commune run as an artwork whose citizenship is a freely transferable <b>Citizen NFT</b>: mint one, hold it, and holding it is your membership and your vote (one NFT, one vote); the vote travels with the token when it is bought, sold, or traded, exactly as CityDAO's Citizen NFTs did, while a UNA &rarr; Wyoming DAO LLC wrapper lets the commune hold real-world assets as its citizens direct, and <b>STATE</b> &mdash; mined, spendable from the commons treasury only by a passed vote &mdash; is the currency, no longer the franchise. Mint a citizen and take part from the terminal: <code>brew install maxtindall/frankcoin/0state</code>, then <code>0state mint</code>. Full source: <a href="https://github.com/maxtindall/0state">github.com/maxtindall/0state</a>.</p>
 
-  <section>
-    <div class="q" data-type>governance</div>
-    <p data-type>The vote is the Citizen NFT — one NFT, one vote. Governance reads current ownership, so whoever holds the NFT at vote time is the citizen; the vote travels with the token when it is traded. A holder of several NFTs casts several votes. Proposals are decided by simple plurality. STATE remains the commune's currency (mine it), spendable from the commons treasury only by a passed vote — but it is no longer the franchise.</p>
-  </section>
+  <div class="disc">Live on Solana's devnet. Its Citizen NFTs and STATE are a test network's and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice.</div>
 
-  <section>
-    <div class="q" data-type>membership</div>
-    <p data-type>Open and permissionless. Mint a Citizen NFT and you are a citizen — no application, no admitting authority. Each is a true 1-of-1; the first tranche are Founding Citizens. Sell it and you sell your citizenship; buy one and you become a citizen. Full source lives at <a href="https://github.com/maxtindall/0state">github.com/maxtindall/0state</a>.</p>
-  </section>
-
-  <section>
-    <div class="q" data-type>on-chain status</div>
-    <dl class="report">
-      <div class="line"><dt>status</dt><dd id="fStatus">reading the chain&hellip;</dd></div>
-      <div class="line"><dt>citizens</dt><dd id="fCitizens">&mdash;</dd></div>
-      <div class="line"><dt>proposals</dt><dd id="fProposals">&mdash;</dd></div>
-      <div class="line"><dt>treasury</dt><dd id="fTreasury">&mdash;</dd></div>
-      <div class="line"><dt>voting period</dt><dd id="fPeriod">&mdash;</dd></div>
-      <div class="line"><dt>program</dt><dd class="small"><a id="fProgram" href="https://solscan.io/" target="_blank" rel="noopener">&mdash;</a></dd></div>
-    </dl>
-  </section>
-
-  <section>
-    <div class="q" data-type>proposals</div>
-    <div id="fProposalList" class="proposals"><p class="aside">reading the chain&hellip;</p></div>
-  </section>
-
-  <section>
-    <div class="q" data-type>taking part</div>
-    <p data-type>Citizenship and voting live in the terminal, where you sign with your own wallet. The whole path, from nothing to a cast vote:</p>
-    <div class="cli"><span class="cm"># one time — trust the tap (Homebrew gates third-party formulae)</span>
-<span class="c">$ brew tap maxtindall/frankcoin && brew trust maxtindall/frankcoin</span>
-
-<span class="cm"># 1 — install the 0state client</span>
-<span class="c">$ brew install maxtindall/frankcoin/0state</span>
-
-<span class="cm"># 2 — mint your Citizen NFT; holding it is your vote</span>
-<span class="c">$ 0state mint</span>
-
-<span class="cm"># 3 — take part</span>
-<span class="c">$ 0state status</span>                   <span class="cm"># the commune, and your citizenship</span>
-<span class="c">$ 0state proposals</span>                <span class="cm"># open questions and their tallies</span>
-<span class="c">$ 0state propose "&lt;title&gt;"</span>
-<span class="c">$ 0state vote &lt;id&gt; yes|no|abstain</span>       <span class="cm"># votes with your Citizen NFT</span>
-
-<span class="cm"># optional — mine the STATE currency; later, pull updates</span>
-<span class="c">$ statemine</span>
-<span class="c">$ brew upgrade maxtindall/frankcoin/0state</span></div>
-    <p class="aside" data-type>Signing happens locally with your own Solana keypair; nothing is custodied. Your Citizen NFT is a normal, transferable token — trade it and the vote goes with it.</p>
-  </section>
-
-  <div class="disc" data-type>0state D.A.O. is currently live on Solana's devnet. Its STATE tokens are a test network's and are worth nothing. Nothing here is an offer, a sale, a security, or financial advice.</div>
-
-  <footer>
-    &copy; 0state D.A.O. 2026
-  </footer>
+  <footer>&copy; 0state D.A.O. 2026</footer>
 </div>
-
-<script>
-(function () {
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function cursor(){var c=document.createElement('span');c.className='cursor';return c;}
-  function typeInto(el,text,speed,done){el.textContent='';var cur=cursor();el.appendChild(cur);var i=0;
-    (function tick(){el.textContent=text.slice(0,i);el.appendChild(cur);
-      if(i++<text.length)setTimeout(tick,speed);
-      else{if(cur.parentNode)cur.parentNode.removeChild(cur);if(done)setTimeout(done,120);}})();}
-
-  var blocks=[];
-  blocks.push([document.querySelector('.brand'),document.querySelector('.tag')]);
-  Array.prototype.forEach.call(document.querySelectorAll('section'),function(sec){
-    var kids=sec.querySelectorAll('[data-type]');if(kids.length)blocks.push(Array.prototype.slice.call(kids));});
-  blocks.push([document.querySelector('.disc')]);
-  blocks.forEach(function(b){b.forEach(function(el){
-    el.setAttribute('data-text',el.textContent.replace(/\s+/g,' ').trim());
-    if(!reduce)el.textContent='';});});
-
-  function speedFor(el){if(el.classList.contains('brand'))return 90;if(el.classList.contains('q'))return 26;return 9;}
-  function typeBlock(b,done){(function next(i){if(i>=b.length){if(done)done();return;}
-    typeInto(b[i],b[i].getAttribute('data-text'),speedFor(b[i]),function(){next(i+1);});})(0);}
-
-  if(!reduce){
-    var armed=false,queued=[];
-    typeBlock(blocks[0],function(){armed=true;queued.splice(0).forEach(function(b){typeBlock(b);});});
-    var seen=[];
-    var io=new IntersectionObserver(function(es){es.forEach(function(e){
-      if(!e.isIntersecting||seen.indexOf(e.target)>=0)return;seen.push(e.target);
-      var b=e.target.__block;if(armed)typeBlock(b);else queued.push(b);});},
-      {rootMargin:'0px 0px -10% 0px',threshold:0.05});
-    blocks.slice(1).forEach(function(b){var a=b[0].closest('section')||b[0];a.__block=b;io.observe(a);});
-  }
-
-  // ---- read the assembly straight from the chain, no dependency ----------
-  var RPC='https://api.devnet.solana.com';
-  var DAO='BPu5i6U3T69a16TY62J2HBWk7DJMHrU4UHH1Z1GCGmY9';
-
-  // the DAO PDA: findProgramAddress(["dao"], program). Precomputed at build
-  // time so the page needs no crypto library; verified against the deployment.
-  var DAO_PDA='7Tq8KzAALZrv87u2WQ3iEwGJHxSS6PkEeE8Bt5NLdzwD';
-
-  // The commons treasury's token account (STATE program PDA vault). 10% of every
-  // mined STATE is routed here; spent only by proposal and vote. Precomputed.
-  var TREASURY_ATA='9sRN1jpD3aZNyxdYbBoxjxhE5xeeu7tSjeAyaPpB7tqA';
-
-  // Citizens = minted Citizen NFTs. Count the citizen program's CitizenMarker
-  // accounts (one per NFT; dataSize 90). No data needed — just the count.
-  var CITIZEN_PROGRAM='FVB77ftzfggbdk5tHHB6fE4AzHQrHMjmzXjn8UujypfM';
-  function reportMiners(){
-    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:4,method:'getProgramAccounts',
-        params:[CITIZEN_PROGRAM,{encoding:'base64',commitment:'confirmed',dataSlice:{offset:0,length:0},filters:[{dataSize:90}]}]})})
-    .then(function(r){return r.json();})
-    .then(function(j){if(!j.result)return;
-      put('fCitizens', j.result.length.toLocaleString('en-US'));})
-    .catch(function(){});
-  }
-
-  function put(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
-  function u64(bytes,off){var lo=0,hi=0;for(var i=0;i<4;i++)lo+=bytes[off+i]*Math.pow(2,8*i);
-    for(var j=0;j<4;j++)hi+=bytes[off+4+j]*Math.pow(2,8*j);return hi*4294967296+lo;}
-  function i64(bytes,off){return u64(bytes,off);} // periods are small & positive here
-
-  function b64ToBytes(b64){var bin=atob(b64);var out=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
-
-  function reportTreasury(){
-    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:3,method:'getTokenAccountBalance',params:[TREASURY_ATA,{commitment:'confirmed'}]})})
-    .then(function(r){return r.json();})
-    .then(function(j){var v=j.result&&j.result.value;
-      put('fTreasury', v?(Number(v.uiAmount).toLocaleString('en-US')+' STATE'):'0 STATE');})
-    .catch(function(){});
-  }
-  function report(){
-    reportTreasury();
-    put('fProgram', DAO);
-    var pf=document.getElementById('fProgram');
-    if(pf)pf.href='https://solscan.io/account/'+DAO+'?cluster=devnet';
-    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getAccountInfo',
-        params:[DAO_PDA,{encoding:'base64',commitment:'confirmed'}]})})
-    .then(function(r){return r.json();})
-    .then(function(j){
-      var val=j.result&&j.result.value;
-      if(!val){put('fStatus','not yet convened');return;}
-      var d=b64ToBytes(val.data[0]);
-      // 8 disc + bump(1) + founder(32) + genesis(8)
-      //   + voting_period(8) + member_count(8) + proposal_count(8)
-      var period=i64(d,49), proposals=u64(d,65);
-      put('fStatus','convened');
-      put('fProposals', proposals.toLocaleString('en-US'));
-      put('fPeriod', Math.round(period/86400)+' days per vote');
-    })
-    .catch(function(){put('fStatus','the network did not answer');});
-  }
-  // ---- proposals, decoded straight from the chain (read-only) -------------
-  var PROP_DISC=[26,94,189,187,116,136,53,33];
-  function discB64(){var s='';for(var i=0;i<PROP_DISC.length;i++)s+=String.fromCharCode(PROP_DISC[i]);return btoa(s);}
-  function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  function decodeProp(d){
-    var o=8+1; var id=u64(d,o);o+=8;o+=32;
-    var tlen=d[o]+d[o+1]*256+d[o+2]*65536+d[o+3]*16777216;o+=4;
-    var title=new TextDecoder().decode(d.slice(o,o+tlen));o+=tlen;o+=32;o+=8;
-    var closes=i64(d,o);o+=8;
-    var yes=u64(d,o);o+=8;var no=u64(d,o);o+=8;var abstain=u64(d,o);o+=8;
-    var electorate=(o+8<=d.length)?u64(d,o):null;
-    return {id:id,title:title,closes:closes,yes:yes,no:no,abstain:abstain,electorate:electorate};
-  }
-  function bar(y,n,a){var t=y+n+a;if(!t)return '<i class="y" style="width:0"></i>';function w(v){return (v/t*100).toFixed(1)+'%';}
-    return '<i class="y" style="width:'+w(y)+'"></i><i class="n" style="width:'+w(n)+'"></i><i class="a" style="width:'+w(a)+'"></i>';}
-  function renderProps(list){
-    var box=document.getElementById('fProposalList');if(!box)return;
-    if(!list.length){box.innerHTML='<p class="aside">no proposals yet.</p>';return;}
-    var now=Math.floor(Date.now()/1000);
-    list.sort(function(a,b){return b.id-a.id;});
-    box.innerHTML=list.map(function(p){
-      var open=now<p.closes;
-      var close=new Date(p.closes*1000).toISOString().slice(0,16).replace('T',' ')+'Z';
-      return '<div class="prop"><div class="prop-head"><span class="prop-title">'+esc(p.title)+'</span>'
-        +'<span class="prop-state '+(open?'open':'closed')+'">'+(open?'open':'closed')+'</span></div>'
-        +'<div class="tally">'+bar(p.yes,p.no,p.abstain)+'</div>'
-        +'<div class="prop-nums"><span>yes <b>'+p.yes+'</b></span><span>no <b>'+p.no+'</b></span>'
-        +'<span>abstain <b>'+p.abstain+'</b></span><span>&middot; weighted'+(p.electorate!=null?' · electorate '+p.electorate:'')+'</span></div>'
-        +'<div class="prop-close">'+(open?'closes ':'closed ')+close+' &middot; #'+p.id+'</div></div>';
-    }).join('');
-  }
-  function loadProps(){
-    fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',id:2,method:'getProgramAccounts',
-        params:[DAO,{encoding:'base64',commitment:'confirmed',filters:[{memcmp:{offset:0,bytes:discB64(),encoding:'base64'}}]}]})})
-    .then(function(r){return r.json();})
-    .then(function(j){if(!j.result)return;renderProps(j.result.map(function(a){return decodeProp(b64ToBytes(a.account.data[0]));}));})
-    .catch(function(){var box=document.getElementById('fProposalList');if(box)box.innerHTML='<p class="aside">the network did not answer.</p>';});
-  }
-  report();loadProps();reportMiners();
-  setInterval(function(){report();loadProps();reportMiners();},30000);
-})();
-</script>
 </body>
 </html>
